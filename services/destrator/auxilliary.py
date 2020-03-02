@@ -15,6 +15,7 @@ import numpy as np
 import os 
 from copy import copy, deepcopy
 import datetime
+from matplotlib import pyplot
 
 def get_row(cell):
     return int(re.search(r'(\d+?)$', cell).group(1))
@@ -44,17 +45,34 @@ def auth():
 
 def retrieve_drive_files():
     service = auth()
-    results = service.files().list().execute()
-    files = []
-    for item in results['items']:
-        if '(respostas)' in item['title']:
-            files.append(item)
-    return files
+    result = []
+    page_token = None
+    while True:
+        try:
+            param = {}
+            if page_token:
+                param['pageToken'] = page_token
+            files = service.files().list(**param).execute()
+            for file_ in files['items']:
+                if '(respostas)' in file_['title'] and 'SEM' in file_['title']:
+                    result.append(file_)
 
-def download_csv_file(id):
+            page_token = files.get('nextPageToken')
+            if not page_token:
+                break
+        except:
+            print('An error occurred on @retrieve_drive_files')
+            break
+    for item in result:
+        print(item['title'])
+    return result
+
+def download_csv_file(id, files=None):
+    if files is None:
+        files = retrieve_drive_files()
     service = auth()
     HEADERS = b'"xA","xB","xC","xD","Q01","Q02","Q03","Q04","Q05","Q06","Q07","Q08","Q09","Q10"'
-    for item in retrieve_drive_files():
+    for item in files:
         if item['id'] == id:
             data = service.files().export(fileId=item['id'], mimeType='text/csv').execute()
             data = b'\n'.join([HEADERS] + data.split(b'\n')[1:])
@@ -67,15 +85,17 @@ def load_csv(fn):
     return df 
 
 def top_students(df, ammount=10):
-    df = df.sort_values(by=['xC'])[::-1][:ammount]
+    df = df.sort_values(by=(['xC', 'xA']), ascending=[False, True])[:ammount]
     return df
 
 def bottom_students(df, ammount=10):
-    df = df.sort_values(by=['xC'])[:ammount]
+    df = df.sort_values(by=(['xC', 'xA']), ascending=[True, True])[:ammount]
     return df
 
 def calculate_statistics(df):
     statistics = {}
+    statistics['MIN'] = np.min(df['xC'])
+    statistics['MAX'] = np.max(df['xC'])
     statistics['MEAN'] = np.mean(df['xC'])
     statistics['STD'] = np.std(df['xC'])
     for question_id in ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10']:
@@ -88,24 +108,6 @@ def calculate_statistics(df):
                 answers[student_data[question_title]] = 1
         statistics[question_title] = answers
     return statistics
-
-def print_statistics(data, title=''):
-    print('STATISTICS OF {} STUDENTS:'.format(title))
-    for key in data:
-        print('    {}: {}'.format(key, data[key]))
-    print()
-
-def clear(ws, destination):
-    ws[destination].font = copy(ws['A1'].font)
-    ws[destination].border = copy(ws['A1'].border)
-    ws[destination].fill = copy(ws['A1'].fill)
-    ws[destination].number_format = copy(ws['A1'].number_format)
-    ws[destination].protection = copy(ws['A1'].protection)
-    ws[destination].alignment = copy(ws['A1'].alignment)
-    ws[destination].style = copy(ws['A1'].style)
-    if type(ws[destination]).__name__ != 'MergedCell':
-        ws[destination].value = copy(ws['A1'].value)
-    ws.row_dimensions[get_row(destination)].height = 30
 
 def duplicate(ws, origin, destination):
     ws[destination].font = copy(ws[origin].font)
@@ -120,130 +122,154 @@ def duplicate(ws, origin, destination):
     if (ws.row_dimensions[get_row(origin)].height == 7.5):
         ws.row_dimensions[get_row(destination)].height = 7.5
 
-def move(ws, origin, destination):
-    duplicate(ws, origin, destination)
-    clear(ws, origin)
-
-def convert(fn, fdata=None):
-    print('@CONVERT>>', fn, fdata)
+def generate_tbl(fn, fdata=None):
+    print('@GEN TBL>>', fn, fdata)
     fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('.csv', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
-    
     df = load_csv(fdata if fdata else fn)
-    print('CONVERT>>SHAPE::', df.shape)
-    print('CONVERT>>GENERATING REPORT::{}'.format(fn_formatted))
-    top = top_students(df)
-    bot = bottom_students(df)[::-1]
-    # rest = pandas.concat([df, top]).drop_duplicates(keep=False)
-    # rest = pandas.concat([rest, bot]).drop_duplicates(keep=False).sort_values(by=['xC'])[::-1]
-    all_stats = calculate_statistics(df)
-    # print_statistics(all_stats, 'ALL')
-    
-    wb = openpyxl.load_workbook(filename='destrator/inputs/TEMPLATE.xlsx')
+    print('GEN TBL>>SHAPE::', df.shape)
+    print('GEN TBL>>GENERATING REPORT::{}'.format(fn_formatted))
+    students = bottom_students(df, ammount=df.shape[0] - 20)
+    stats = calculate_statistics(students)
+
+    wb = openpyxl.load_workbook(filename='destrator/inputs/TEMPLATE_TBL.xlsx')
     ws = wb.active
-    ws['B3'] = fn_formatted
+    ws['D3'] = fn_formatted
     ws['G3'] = datetime.datetime.now().strftime('%d/%m/%Y')
-    ws['D6'] = '{:.2f}'.format(all_stats['MEAN'])
-    ws['F6'] = '{:.2f}'.format(all_stats['STD'])
-
-    # title
-    ws.merge_cells('C4:F4')
-
-    matrix_base_row = 19
-    if df.shape[0] >= 10:
-
-        # move tables
-        matrix_base_row += 9
-        for row in range(29, 11, -1):
-            for column in ['A', 'B', 'C', 'D', 'E', 'F', 'G']:
-                move(ws, column + str(row), column + str(row + 9))
+    ws['C6'] = 'MAIOR: {:.2f}'.format(stats['MAX'])
+    ws['D6'] = 'MENOR: {:.2f}'.format(stats['MIN'])
+    ws['E6'] = 'MÉDIA: {:.2f}'.format(stats['MEAN'])
+    ws['F6'] = 'DESVIO: {:.2f}'.format(stats['STD'])
         
-        # top students filling
-        students = list(top.iterrows())
-        ws['G10'] = students[0][1]['xC']
-        ws['C10'] = students[0][1]['xD'].upper()
-        ws['B10'] = '1.  '
-        ws['B10'].alignment = openpyxl.styles.Alignment(horizontal='right', vertical='center')
-        ws['B10'].border = copy(ws['B5'].border)
-        ws['C10'].border = copy(ws['C5'].border)
-        ws['D10'].border = copy(ws['D5'].border)
-        ws['E10'].border = copy(ws['E5'].border)
-        ws['F10'].border = copy(ws['F5'].border)
-        ws['G10'].border = copy(ws['G5'].border)
-        for index, (_, student) in enumerate(students[1:]):
-            row = str(11 + index)
-            duplicate(ws, 'C10', 'C' + row)
-            duplicate(ws, 'G10', 'G' + row)
-            ws['C' + row].border = copy(ws['A1'].border)
-            ws['B' + row].border = copy(ws['B5'].border)
-            ws['G' + row].border = copy(ws['G5'].border)
-            ws['G' + row] = student['xC']
-            ws['C' + row] = student['xD'].upper()
-            ws['B' + row] = '{}.  '.format(index + 2)
-            ws['B' + row].alignment = openpyxl.styles.Alignment(horizontal='right', vertical='center')
-            if type(ws['C' + row]).__name__ != 'MergedCell':
-                ws.merge_cells('C{}:F{}'.format(row, row))
-        ws['B19'].border = copy(ws['B6'].border)
-        ws['C19'].border = copy(ws['C6'].border)
-        ws['D19'].border = copy(ws['D6'].border)
-        ws['E19'].border = copy(ws['E6'].border)
-        ws['F19'].border = copy(ws['F6'].border)
-        ws['G19'].border = copy(ws['G6'].border)
+    students = list(students.iterrows())
+    ws['G10'] = students[0][1]['xC']
+    ws['C10'] = students[0][1]['xD'].upper()
+    ws['B10'] = '1.  '
+    ws['B10'].alignment = openpyxl.styles.Alignment(horizontal='right', vertical='center')
+    ws['B10'].border = copy(ws['B5'].border)
+    ws['C10'].border = copy(ws['C5'].border)
+    ws['D10'].border = copy(ws['D5'].border)
+    ws['E10'].border = copy(ws['E5'].border)
+    ws['F10'].border = copy(ws['F5'].border)
+    ws['G10'].border = copy(ws['G5'].border)
+    for index, (_, student) in enumerate(students[1:]):
+        row = str(11 + index)
+        duplicate(ws, 'C10', 'C' + row)
+        duplicate(ws, 'G10', 'G' + row)
+        ws['C' + row].border = copy(ws['A1'].border)
+        ws['B' + row].border = copy(ws['B5'].border)
+        ws['G' + row].border = copy(ws['G5'].border)
+        ws['G' + row] = student['xC']
+        ws['C' + row] = student['xD'].upper()
+        ws['B' + row] = '{}.  '.format(index + 2)
+        ws['B' + row].alignment = openpyxl.styles.Alignment(horizontal='right', vertical='center')
+        if type(ws['C' + row]).__name__ != 'MergedCell':
+            ws.merge_cells('C{}:F{}'.format(row, row))
+    ws['B' + str(9 + len(students))].border = copy(ws['B6'].border)
+    ws['C' + str(9 + len(students))].border = copy(ws['C6'].border)
+    ws['D' + str(9 + len(students))].border = copy(ws['D6'].border)
+    ws['E' + str(9 + len(students))].border = copy(ws['E6'].border)
+    ws['F' + str(9 + len(students))].border = copy(ws['F6'].border)
+    ws['G' + str(9 + len(students))].border = copy(ws['G6'].border)
 
-    if df.shape[0] >= 20:
-        # move tables
-        matrix_base_row += 9
-        for row in range(38, 24, -1):
-            for column in ['A', 'B', 'C', 'D', 'E', 'F', 'G']:
-                move(ws, column + str(row), column + str(row + 9))
+    wb.save('destrator/outputs/' + fn_formatted.upper() + '_TBL.xlsx')
+    return 'destrator/outputs/' + fn_formatted.upper() + '_TBL.xlsx'
 
-        # bottom students filling
-        students = list(bot.iterrows())
-        ws['G23'] = students[0][1]['xC']
-        ws['C23'] = students[0][1]['xD'].upper()
-        ws['B23'] = '{}.  '.format(df.shape[0] - 10)
-        ws['B23'].alignment = openpyxl.styles.Alignment(horizontal='right', vertical='center')
-        ws['B23'].border = copy(ws['B5'].border)
-        ws['C23'].border = copy(ws['C5'].border)
-        ws['D23'].border = copy(ws['D5'].border)
-        ws['E23'].border = copy(ws['E5'].border)
-        ws['F23'].border = copy(ws['F5'].border)
-        ws['G23'].border = copy(ws['G5'].border)
-        ws.merge_cells('C23:F23')
-        for index, (_, student) in enumerate(students[1:]):
-            row = str(24 + index)
-            duplicate(ws, 'C23', 'C' + row)
-            duplicate(ws, 'G23', 'G' + row)
-            ws['C' + row].border = copy(ws['A5'].border)
-            ws['B' + row].border = copy(ws['B5'].border)
-            ws['D' + row].border = copy(ws['D5'].border)
-            ws['E' + row].border = copy(ws['E5'].border)
-            ws['F' + row].border = copy(ws['F5'].border)
-            ws['G' + row].border = copy(ws['G5'].border)
-            ws['G' + row] = student['xC']
-            ws['C' + row] = student['xD'].upper()
-            ws['B' + row] = '{}.  '.format(df.shape[0] - 10 + index + 1)
-            ws['B' + row].alignment = openpyxl.styles.Alignment(horizontal='right', vertical='center')
-            if type(ws['C' + row]).__name__ != 'MergedCell':
-                ws.merge_cells('C{}:F{}'.format(row, row))
-        ws['B32'].border = copy(ws['B6'].border)
-        ws['C32'].border = copy(ws['C6'].border)
-        ws['D32'].border = copy(ws['D6'].border)
-        ws['E32'].border = copy(ws['E6'].border)
-        ws['F32'].border = copy(ws['F6'].border)
-        ws['G32'].border = copy(ws['G6'].border)
+def generate_score_z(fn, fdata=None):
+    print('@GEN SCORE Z>>', fn, fdata)
+    fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('.csv', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
+    df = load_csv(fdata if fdata else fn)
+    print('GEN SCORE Z>>SHAPE::', df.shape)
+    print('GEN SCORE Z>>GENERATING REPORT::{}'.format(fn_formatted))
+    students = top_students(df, ammount=20)
+    stats = calculate_statistics(students)
+
+    wb = openpyxl.load_workbook(filename='destrator/inputs/TEMPLATE_SCORE_Z.xlsx')
+    ws = wb.active
+    ws['D3'] = fn_formatted
+    ws['G3'] = datetime.datetime.now().strftime('%d/%m/%Y')
+    ws['C6'] = 'MAIOR: {:.2f}'.format(stats['MAX'])
+    ws['D6'] = 'MENOR: {:.2f}'.format(stats['MIN'])
+    ws['E6'] = 'MÉDIA: {:.2f}'.format(stats['MEAN'])
+    ws['F6'] = 'DESVIO: {:.2f}'.format(stats['STD'])
+        
+    students = list(students.iterrows())
+    ws['G10'] = students[0][1]['xC']
+    ws['C10'] = students[0][1]['xD'].upper()
+    ws['B10'] = '1.  '
+    ws['B10'].alignment = openpyxl.styles.Alignment(horizontal='right', vertical='center')
+    ws['B10'].border = copy(ws['B5'].border)
+    ws['C10'].border = copy(ws['C5'].border)
+    ws['D10'].border = copy(ws['D5'].border)
+    ws['E10'].border = copy(ws['E5'].border)
+    ws['F10'].border = copy(ws['F5'].border)
+    ws['G10'].border = copy(ws['G5'].border)
+    for index, (_, student) in enumerate(students[1:]):
+        row = str(11 + index)
+        duplicate(ws, 'C10', 'C' + row)
+        duplicate(ws, 'G10', 'G' + row)
+        ws['C' + row].border = copy(ws['A1'].border)
+        ws['B' + row].border = copy(ws['B5'].border)
+        ws['G' + row].border = copy(ws['G5'].border)
+        ws['G' + row] = student['xC']
+        ws['C' + row] = student['xD'].upper()
+        ws['B' + row] = '{}.  '.format(index + 2)
+        ws['B' + row].alignment = openpyxl.styles.Alignment(horizontal='right', vertical='center')
+        if type(ws['C' + row]).__name__ != 'MergedCell':
+            ws.merge_cells('C{}:F{}'.format(row, row))
+    ws['B' + str(9 + len(students))].border = copy(ws['B6'].border)
+    ws['C' + str(9 + len(students))].border = copy(ws['C6'].border)
+    ws['D' + str(9 + len(students))].border = copy(ws['D6'].border)
+    ws['E' + str(9 + len(students))].border = copy(ws['E6'].border)
+    ws['F' + str(9 + len(students))].border = copy(ws['F6'].border)
+    ws['G' + str(9 + len(students))].border = copy(ws['G6'].border)
+
+    wb.save('destrator/outputs/' + fn_formatted.upper() + '_SCORE_Z.xlsx')
+    return 'destrator/outputs/' + fn_formatted.upper() + '_SCORE_Z.xlsx'
+
+def generate_destrator(fn, fdata=None):
+    print('@GEN DESTRATOR >>', fn, fdata)
+    fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('.csv', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
+    df = load_csv(fdata if fdata else fn)
+    print('GEN DESTRATOR>>SHAPE::', df.shape)
+    print('GEN DESTRATOR>>GENERATING REPORT::{}'.format(fn_formatted))
+    students = df
+    xc = students['xC'].hist(bins=range(12), range=(0, 11), alpha=0.5, align='left', color='black')
+    xc.set_ylabel('Frequência')
+    xc.set_xlabel('Notas')
+    xc.set_title('Frequência de Notas')
+     # s is an instance of Series
+    fig = xc.get_figure()
+    fig.savefig('destrator/outputs/curve.png')
+    pyplot.close(fig) 
+    stats = calculate_statistics(students)
+
+    wb = openpyxl.load_workbook(filename='destrator/inputs/TEMPLATE_DESTRATOR.xlsx')
+    ws = wb.active
+    ws['D3'] = fn_formatted
+    ws['G3'] = datetime.datetime.now().strftime('%d/%m/%Y')
+    ws['C6'] = 'MAIOR: {:.2f}'.format(stats['MAX'])
+    ws['D6'] = 'MENOR: {:.2f}'.format(stats['MIN'])
+    ws['E6'] = 'MÉDIA: {:.2f}'.format(stats['MEAN'])
+    ws['F6'] = 'DESVIO: {:.2f}'.format(stats['STD'])
     
     # destractor matrix header
-    ws.merge_cells('D{}:F{}'.format(matrix_base_row-2, matrix_base_row-2))
+    ws.merge_cells('D{}:F{}'.format(9, 9))
     
     # destractor matrix
     for index, question_id in enumerate(['01', '02', '03', '04', '05', '06', '07', '08', '09', '10']):
         question_title = 'Q{}'.format(question_id)
         answers = ['A', 'B', 'C', 'D', 'E']
         for a_index, answer in enumerate(answers):
-            ws[chr(ord('C') + a_index).upper() + str(matrix_base_row + index)] = all_stats[question_title][answer]
+            ws[chr(ord('C') + a_index).upper() + str(11 + index)] = stats[question_title][answer]
+    
 
-    wb.save('destrator/outputs/' + fn_formatted.upper() + '_RELATORIO.xlsx')
-    return 'destrator/outputs/' + fn_formatted.upper() + '_RELATORIO.xlsx'
+    img = openpyxl.drawing.image.Image('destrator/outputs/curve.png')
+    img.anchor = 'C22'
+    ws.add_image(img)
+
+    wb.save('destrator/outputs/' + fn_formatted.upper() + '_DESTRATOR.xlsx')
+    return 'destrator/outputs/' + fn_formatted.upper() + '_DESTRATOR.xlsx'
 
 
-
+if __name__ == '__main__':
+    retrieve_drive_files()
