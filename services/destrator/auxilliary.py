@@ -141,35 +141,36 @@ def generate_tbl(fn, fdata=None):
     ws['F6'] = 'DESVIO: {:.2f}'.format(stats['STD'])
         
     students = list(students.iterrows())
-    ws['G10'] = students[0][1]['xC']
-    ws['C10'] = students[0][1]['xD'].upper()
-    ws['B10'] = '1.  '
-    ws['B10'].alignment = openpyxl.styles.Alignment(horizontal='right', vertical='center')
-    ws['B10'].border = copy(ws['B5'].border)
-    ws['C10'].border = copy(ws['C5'].border)
-    ws['D10'].border = copy(ws['D5'].border)
-    ws['E10'].border = copy(ws['E5'].border)
-    ws['F10'].border = copy(ws['F5'].border)
-    ws['G10'].border = copy(ws['G5'].border)
-    for index, (_, student) in enumerate(students[1:]):
-        row = str(11 + index)
-        duplicate(ws, 'C10', 'C' + row)
-        duplicate(ws, 'G10', 'G' + row)
-        ws['C' + row].border = copy(ws['A1'].border)
-        ws['B' + row].border = copy(ws['B5'].border)
-        ws['G' + row].border = copy(ws['G5'].border)
-        ws['G' + row] = student['xC']
-        ws['C' + row] = student['xD'].upper()
-        ws['B' + row] = '{}.  '.format(index + 2)
-        ws['B' + row].alignment = openpyxl.styles.Alignment(horizontal='right', vertical='center')
-        if type(ws['C' + row]).__name__ != 'MergedCell':
-            ws.merge_cells('C{}:F{}'.format(row, row))
-    ws['B' + str(9 + len(students))].border = copy(ws['B6'].border)
-    ws['C' + str(9 + len(students))].border = copy(ws['C6'].border)
-    ws['D' + str(9 + len(students))].border = copy(ws['D6'].border)
-    ws['E' + str(9 + len(students))].border = copy(ws['E6'].border)
-    ws['F' + str(9 + len(students))].border = copy(ws['F6'].border)
-    ws['G' + str(9 + len(students))].border = copy(ws['G6'].border)
+    if students:
+        ws['G10'] = students[0][1]['xC']
+        ws['C10'] = students[0][1]['xD'].upper()
+        ws['B10'] = '1.  '
+        ws['B10'].alignment = openpyxl.styles.Alignment(horizontal='right', vertical='center')
+        ws['B10'].border = copy(ws['B5'].border)
+        ws['C10'].border = copy(ws['C5'].border)
+        ws['D10'].border = copy(ws['D5'].border)
+        ws['E10'].border = copy(ws['E5'].border)
+        ws['F10'].border = copy(ws['F5'].border)
+        ws['G10'].border = copy(ws['G5'].border)
+        for index, (_, student) in enumerate(students[1:]):
+            row = str(11 + index)
+            duplicate(ws, 'C10', 'C' + row)
+            duplicate(ws, 'G10', 'G' + row)
+            ws['C' + row].border = copy(ws['A1'].border)
+            ws['B' + row].border = copy(ws['B5'].border)
+            ws['G' + row].border = copy(ws['G5'].border)
+            ws['G' + row] = student['xC']
+            ws['C' + row] = student['xD'].upper()
+            ws['B' + row] = '{}.  '.format(index + 2)
+            ws['B' + row].alignment = openpyxl.styles.Alignment(horizontal='right', vertical='center')
+            if type(ws['C' + row]).__name__ != 'MergedCell':
+                ws.merge_cells('C{}:F{}'.format(row, row))
+        ws['B' + str(9 + len(students))].border = copy(ws['B6'].border)
+        ws['C' + str(9 + len(students))].border = copy(ws['C6'].border)
+        ws['D' + str(9 + len(students))].border = copy(ws['D6'].border)
+        ws['E' + str(9 + len(students))].border = copy(ws['E6'].border)
+        ws['F' + str(9 + len(students))].border = copy(ws['F6'].border)
+        ws['G' + str(9 + len(students))].border = copy(ws['G6'].border)
 
     wb.save('destrator/outputs/' + fn_formatted.upper() + '_TBL.xlsx')
     return 'destrator/outputs/' + fn_formatted.upper() + '_TBL.xlsx'
@@ -193,35 +194,36 @@ def generate_score_z(fn, fdata=None):
     ws['F6'] = 'DESVIO: {:.2f}'.format(stats['STD'])
         
     students = list(students.iterrows())
-    ws['G10'] = students[0][1]['xC']
-    ws['C10'] = students[0][1]['xD'].upper()
-    ws['B10'] = '1.  '
-    ws['B10'].alignment = openpyxl.styles.Alignment(horizontal='right', vertical='center')
-    ws['B10'].border = copy(ws['B5'].border)
-    ws['C10'].border = copy(ws['C5'].border)
-    ws['D10'].border = copy(ws['D5'].border)
-    ws['E10'].border = copy(ws['E5'].border)
-    ws['F10'].border = copy(ws['F5'].border)
-    ws['G10'].border = copy(ws['G5'].border)
-    for index, (_, student) in enumerate(students[1:]):
-        row = str(11 + index)
-        duplicate(ws, 'C10', 'C' + row)
-        duplicate(ws, 'G10', 'G' + row)
-        ws['C' + row].border = copy(ws['A1'].border)
-        ws['B' + row].border = copy(ws['B5'].border)
-        ws['G' + row].border = copy(ws['G5'].border)
-        ws['G' + row] = student['xC']
-        ws['C' + row] = student['xD'].upper()
-        ws['B' + row] = '{}.  '.format(index + 2)
-        ws['B' + row].alignment = openpyxl.styles.Alignment(horizontal='right', vertical='center')
-        if type(ws['C' + row]).__name__ != 'MergedCell':
-            ws.merge_cells('C{}:F{}'.format(row, row))
-    ws['B' + str(9 + len(students))].border = copy(ws['B6'].border)
-    ws['C' + str(9 + len(students))].border = copy(ws['C6'].border)
-    ws['D' + str(9 + len(students))].border = copy(ws['D6'].border)
-    ws['E' + str(9 + len(students))].border = copy(ws['E6'].border)
-    ws['F' + str(9 + len(students))].border = copy(ws['F6'].border)
-    ws['G' + str(9 + len(students))].border = copy(ws['G6'].border)
+    if students:
+        ws['G10'] = students[0][1]['xC']
+        ws['C10'] = students[0][1]['xD'].upper()
+        ws['B10'] = '1.  '
+        ws['B10'].alignment = openpyxl.styles.Alignment(horizontal='right', vertical='center')
+        ws['B10'].border = copy(ws['B5'].border)
+        ws['C10'].border = copy(ws['C5'].border)
+        ws['D10'].border = copy(ws['D5'].border)
+        ws['E10'].border = copy(ws['E5'].border)
+        ws['F10'].border = copy(ws['F5'].border)
+        ws['G10'].border = copy(ws['G5'].border)
+        for index, (_, student) in enumerate(students[1:]):
+            row = str(11 + index)
+            duplicate(ws, 'C10', 'C' + row)
+            duplicate(ws, 'G10', 'G' + row)
+            ws['C' + row].border = copy(ws['A1'].border)
+            ws['B' + row].border = copy(ws['B5'].border)
+            ws['G' + row].border = copy(ws['G5'].border)
+            ws['G' + row] = student['xC']
+            ws['C' + row] = student['xD'].upper()
+            ws['B' + row] = '{}.  '.format(index + 2)
+            ws['B' + row].alignment = openpyxl.styles.Alignment(horizontal='right', vertical='center')
+            if type(ws['C' + row]).__name__ != 'MergedCell':
+                ws.merge_cells('C{}:F{}'.format(row, row))
+        ws['B' + str(9 + len(students))].border = copy(ws['B6'].border)
+        ws['C' + str(9 + len(students))].border = copy(ws['C6'].border)
+        ws['D' + str(9 + len(students))].border = copy(ws['D6'].border)
+        ws['E' + str(9 + len(students))].border = copy(ws['E6'].border)
+        ws['F' + str(9 + len(students))].border = copy(ws['F6'].border)
+        ws['G' + str(9 + len(students))].border = copy(ws['G6'].border)
 
     wb.save('destrator/outputs/' + fn_formatted.upper() + '_SCORE_Z.xlsx')
     return 'destrator/outputs/' + fn_formatted.upper() + '_SCORE_Z.xlsx'
