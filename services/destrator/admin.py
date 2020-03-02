@@ -75,6 +75,7 @@ class TPSAdmin(admin.ModelAdmin):
                 tps = TPS.objects.get(id=f['id'])
                 if tps.answers < csv.shape[0]:
                     tps.last_modified = datetime.datetime.now()
+                tps.answers = csv.shape[0]
                 tps.data = data.getvalue()
                 tps.local = self.get_local(f['title'])
                 tps.week = self.get_week(f['title'])
@@ -102,8 +103,9 @@ class TPSAdmin(admin.ModelAdmin):
         csv = pandas.read_csv(data)
         if TPS.objects.filter(id=id).count():
             tps = TPS.objects.get(id=id)
-            if tps.answers < csv.shape[0] - 1:
+            if tps.answers < csv.shape[0]:
                 tps.last_modified = datetime.datetime.now()
+            tps.answers = csv.shape[0]
             tps.data = data.getvalue()
             tps.save()
         self.message_user(request, "TPS atualizado!")

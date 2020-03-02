@@ -27,6 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     'localhost',
+    '127.0.0.1',
     '0.0.0.0',
     '159.65.226.253',
     'ppa.digital',
