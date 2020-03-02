@@ -25,7 +25,12 @@ SECRET_KEY = '2&4g(pkc(dt6ij9@i1@3bp&i2m5a1ez%x^2cn@rn(bp4cs3ajo'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '0.0.0.0',
+    '159.65.226.253,
+    'ppa.digital',
+]
 
 
 # Application definition
