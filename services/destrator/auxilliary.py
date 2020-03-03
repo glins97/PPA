@@ -124,7 +124,7 @@ def duplicate(ws, origin, destination):
 
 def generate_tbl(fn, fdata=None):
     print('@GEN TBL>>', fn, fdata)
-    fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('.csv', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
+    fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('.csv', '').replace('.pdf', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
     df = load_csv(fdata if fdata else fn)
     ammount = 20
     if 'BRASÍLIA' in fn:
@@ -145,7 +145,7 @@ def generate_tbl(fn, fdata=None):
     ws['F6'] = 'DESVIO: {:.2f}'.format(stats['STD'])
         
     students = list(students.iterrows())
-    if students:
+    if students and df.shape[0] > ammount:
         # ws['G10'] = students[0][1]['xC']
         ws['C10'] = students[0][1]['xD'].upper()
         ws['B10'] = '1.  '
@@ -184,7 +184,7 @@ def generate_score_z(fn, fdata=None):
     ammount = 20
     if 'BRASÍLIA' in fn:
         ammount = 10
-    fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('.csv', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
+    fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('.csv', '').replace('.pdf', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
     df = load_csv(fdata if fdata else fn)
     print('GEN SCORE Z>>SHAPE::', df.shape)
     print('GEN SCORE Z>>GENERATING REPORT::{}'.format(fn_formatted))
@@ -237,7 +237,7 @@ def generate_score_z(fn, fdata=None):
 
 def generate_distrator(fn, fdata=None):
     print('@GEN DISTRATOR >>', fn, fdata)
-    fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('.csv', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
+    fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('.csv', '').replace('.pdf', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
     df = load_csv(fdata if fdata else fn)
     print('GEN DISTRATOR>>SHAPE::', df.shape)
     print('GEN DISTRATOR>>GENERATING REPORT::{}'.format(fn_formatted))

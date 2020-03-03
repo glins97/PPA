@@ -13,7 +13,7 @@ import pandas
 import datetime
 
 class TPSAdmin(admin.ModelAdmin):
-    list_display = ('name', 'url', 'last_modified', 'answers', 'action')
+    list_display = ('name', 'last_modified', 'answers', 'action')
 
     list_filter = ('discipline', 'week', 'local', )
     search_fields = ('name', )
