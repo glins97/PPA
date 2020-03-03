@@ -39,7 +39,7 @@ class TPSAdmin(admin.ModelAdmin):
         return format_html(
             '<a class="button" href="download_pdf_score_z/{}">SCORE Z</a>&nbsp'.format(request.id) +
             '<a class="button" href="download_pdf_tbl/{}">TBL</a>&nbsp'.format(request.id) +
-            '<a class="button" href="download_pdf_distrator/{}">DESTRATOR</a>&nbsp'.format(request.id) +
+            '<a class="button" href="download_pdf_distrator/{}">DISTRATOR</a>&nbsp'.format(request.id) +
             '<a class="button" href="update_tps/{}">UPDATE</a>'.format(request.id))
  
     def get_local(fn):
