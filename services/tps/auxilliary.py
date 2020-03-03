@@ -15,6 +15,9 @@ import numpy as np
 import os 
 from copy import copy, deepcopy
 import datetime
+
+import matplotlib
+matplotlib.use('Agg')
 from matplotlib import pyplot
 
 SCOPES = ['https://www.googleapis.com/auth/drive']
