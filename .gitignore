@@ -4,3 +4,5 @@
 *.sqlite3
 services/db.sqlite3
 *.png
+*.xlsx
+**token

@@ -17,34 +17,31 @@ from copy import copy, deepcopy
 import datetime
 from matplotlib import pyplot
 
+SCOPES = ['https://www.googleapis.com/auth/drive']
+creds = None
+if os.path.exists('./tps/credentials/token'):
+    with open('./tps/credentials/token', 'rb') as token:
+        creds = pickle.load(token)
+
+if not creds or not creds.valid:
+    if creds and creds.expired and creds.refresh_token:
+        creds.refresh(Request())
+    else:
+        flow = InstalledAppFlow.from_client_secrets_file(
+            './tps/credentials/client_secret.json', SCOPES)
+        creds = flow.run_local_server(port=0)
+    with open('./tps/credentials/token', 'wb') as token:
+        pickle.dump(creds, token)
+
+service = build('drive', 'v2', credentials=creds)
+
 def get_row(cell):
     return int(re.search(r'(\d+?)$', cell).group(1))
     
 def name_format(fn):
     return ' TPS '.join(fn.split('TPS')).replace('(respostas)', '').strip()
 
-def auth():
-    SCOPES = ['https://www.googleapis.com/auth/drive']
-    creds = None
-    if os.path.exists('./tps/credentials/token'):
-        with open('./tps/credentials/token', 'rb') as token:
-            creds = pickle.load(token)
-
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                './tps/credentials/client_secret.json', SCOPES)
-            creds = flow.run_local_server(port=0)
-        with open('./tps/credentials/token', 'wb') as token:
-            pickle.dump(creds, token)
-
-    service = build('drive', 'v2', credentials=creds)
-    return service
-
 def retrieve_drive_files():
-    service = auth()
     result = []
     page_token = None
     while True:
@@ -70,7 +67,6 @@ def retrieve_drive_files():
 def download_csv_file(id, files=None):
     if files is None:
         files = retrieve_drive_files()
-    service = auth()
     HEADERS = b'"xA","xB","xC","xD","Q01","Q02","Q03","Q04","Q05","Q06","Q07","Q08","Q09","Q10"'
     for item in files:
         if item['id'] == id:
@@ -78,6 +74,13 @@ def download_csv_file(id, files=None):
             data = b'\n'.join([HEADERS] + data.split(b'\n')[1:])
             print('@download_csv_file', item['title'])
             return item['title'], io.BytesIO(data)
+
+def download_by_id(file_id):
+    # print('@download_by_id', file_id)
+    HEADERS = b'"xA","xB","xC","xD","Q01","Q02","Q03","Q04","Q05","Q06","Q07","Q08","Q09","Q10"'
+    data = service.files().export(fileId=file_id, mimeType='text/csv').execute()
+    data = b'\n'.join([HEADERS] + data.split(b'\n')[1:])
+    return io.BytesIO(data)
 
 def load_csv(fn):
     df = pandas.read_csv(fn)
@@ -123,16 +126,16 @@ def duplicate(ws, origin, destination):
         ws.row_dimensions[get_row(destination)].height = 7.5
 
 def generate_tbl(fn, fdata=None):
-    print('@GEN TBL>>', fn, fdata)
+    # print('@GEN TBL>>', fn, fdata)
     fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('  ', ' ').replace('.csv', '').replace('.pdf', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
     df = load_csv(fdata if fdata else fn)
     ammount = 20
     if 'BRASÍLIA' in fn:
         ammount = 10
-    print('GEN TBL>>SHAPE::', df.shape)
-    print('GEN TBL>>GENERATING REPORT::{}'.format(fn_formatted))
+    # print('GEN TBL>>SHAPE::', df.shape)
+    # print('GEN TBL>>GENERATING REPORT::{}'.format(fn_formatted))
     students = bottom_students(df, ammount=df.shape[0] - ammount)
-    print(students)
+    # print(students)
     stats = calculate_statistics(students)
 
     wb = openpyxl.load_workbook(filename='tps/inputs/TEMPLATE_TBL.xlsx')
@@ -184,14 +187,14 @@ def generate_tbl(fn, fdata=None):
     return 'tps/outputs/' + fn_formatted.upper() + '_TBL.xlsx'
 
 def generate_score_z(fn, fdata=None):
-    print('@GEN SCORE Z>>', fn, fdata)
+    # print('@GEN SCORE Z>>', fn, fdata)
     ammount = 20
     if 'BRASÍLIA' in fn:
         ammount = 10
     fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('  ', ' ').replace('.csv', '').replace('.pdf', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
     df = load_csv(fdata if fdata else fn)
-    print('GEN SCORE Z>>SHAPE::', df.shape)
-    print('GEN SCORE Z>>GENERATING REPORT::{}'.format(fn_formatted))
+    # print('GEN SCORE Z>>SHAPE::', df.shape)
+    # print('GEN SCORE Z>>GENERATING REPORT::{}'.format(fn_formatted))
     students = top_students(df, ammount=ammount)
     stats = calculate_statistics(students)
 
@@ -243,11 +246,11 @@ def generate_score_z(fn, fdata=None):
     return 'tps/outputs/' + fn_formatted.upper() + '_SCORE_Z.xlsx'
 
 def generate_distrator(fn, fdata=None):
-    print('@GEN DISTRATOR >>', fn, fdata)
+    # print('@GEN DISTRATOR >>', fn, fdata)
     fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('  ', ' ').replace('.csv', '').replace('.pdf', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
     df = load_csv(fdata if fdata else fn)
-    print('GEN DISTRATOR>>SHAPE::', df.shape)
-    print('GEN DISTRATOR>>GENERATING REPORT::{}'.format(fn_formatted))
+    # print('GEN DISTRATOR>>SHAPE::', df.shape)
+    # print('GEN DISTRATOR>>GENERATING REPORT::{}'.format(fn_formatted))
     students = df
     xc = students['xC'].hist(bins=range(12), range=(0, 11), alpha=0.5, align='left', color='black')
     xc.set_ylabel('Frequência')

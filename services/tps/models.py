@@ -1,4 +1,5 @@
 from django.db import models
+from .auxilliary import *
 choices = (
     ('A', 'A'),
     ('B', 'B'),
@@ -17,6 +18,17 @@ class Report(models.Model):
     last_modified = models.DateField(verbose_name='última modificação')
     answers = models.IntegerField(verbose_name='respostas')
     data = models.BinaryField()
+
+    def update(self):
+        print('@report.update')
+        data = download_by_id(self.id)
+        csv = pandas.read_csv(data)
+        if self.answers < csv.shape[0]:
+            self.last_modified = datetime.datetime.now()
+        self.answers = csv.shape[0]
+        self.data = data.getvalue()
+        self.save()
+
     class Meta:
         ordering = ('name',)
         verbose_name = 'relatório'

@@ -6,7 +6,7 @@ from django.conf import settings
 
 from threading import Thread
 from .models import Report
-from .auxilliary import name_format, download_csv_file, generate_distrator, generate_score_z, generate_tbl, retrieve_drive_files
+from .auxilliary import *
 import os 
 import io
 import pandas
@@ -31,7 +31,6 @@ class ReportAdmin(admin.ModelAdmin):
             re_path(r'^download_pdf_score_z/(?P<id>[\w-]+)/$', self.download_pdf_score_z),
             re_path(r'^download_pdf_tbl/(?P<id>[\w-]+)/$', self.download_pdf_tbl),
             re_path(r'^download_pdf_distrator/(?P<id>[\w-]+)/$', self.download_pdf_distrator),
-            re_path(r'^update_report/(?P<id>[\w-]+)/$', self.update_report),
         ]
         return my_urls + urls
 
@@ -95,21 +94,6 @@ class ReportAdmin(admin.ModelAdmin):
         self.message_user(request, "Report atualizados!")
         return HttpResponseRedirect("../")
 
-    def update_report(self, request, id):
-        report = None
-        id = str(id)
-        data = download_csv_file(id)[1]
-        csv = pandas.read_csv(data)
-        if Report.objects.filter(id=id).count():
-            report = Report.objects.get(id=id)
-            if report.answers < csv.shape[0]:
-                report.last_modified = datetime.datetime.now()
-            report.answers = csv.shape[0]
-            report.data = data.getvalue()
-            report.save()
-        self.message_user(request, "Report atualizado!")
-        return HttpResponseRedirect("../../")
-
     def download_xlsx(self, request, id):
         report = Report.objects.get(id=id)
         fn, fdata = name_format(report.name), io.BytesIO(report.data)
@@ -120,6 +104,7 @@ class ReportAdmin(admin.ModelAdmin):
 
     def _gen_pdf(self, id, func):
         report = Report.objects.get(id=id)
+        report.update()
         fn, fdata = name_format(report.name), io.BytesIO(report.data)
         fn += ' ' + func.upper().replace('_', ' ') + '.pdf'
         output = None
