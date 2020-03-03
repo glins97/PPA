@@ -18,6 +18,7 @@ class TPS(models.Model):
     answers = models.IntegerField()
     data = models.BinaryField()
     class Meta:
+        ordering = ('name',)
         verbose_name = 'TPS'
         verbose_name_plural = 'TPS'
     
