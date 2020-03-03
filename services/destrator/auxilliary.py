@@ -126,9 +126,13 @@ def generate_tbl(fn, fdata=None):
     print('@GEN TBL>>', fn, fdata)
     fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('.csv', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
     df = load_csv(fdata if fdata else fn)
+    ammount = 20
+    if 'BRASÍLIA' in fn:
+        ammount = 10
     print('GEN TBL>>SHAPE::', df.shape)
     print('GEN TBL>>GENERATING REPORT::{}'.format(fn_formatted))
-    students = bottom_students(df, ammount=df.shape[0] - 20)
+    students = bottom_students(df, ammount=df.shape[0] - ammount)
+    print(students)
     stats = calculate_statistics(students)
 
     wb = openpyxl.load_workbook(filename='destrator/inputs/TEMPLATE_TBL.xlsx')
@@ -177,11 +181,14 @@ def generate_tbl(fn, fdata=None):
 
 def generate_score_z(fn, fdata=None):
     print('@GEN SCORE Z>>', fn, fdata)
+    ammount = 20
+    if 'BRASÍLIA' in fn:
+        ammount = 10
     fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('.csv', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
     df = load_csv(fdata if fdata else fn)
     print('GEN SCORE Z>>SHAPE::', df.shape)
     print('GEN SCORE Z>>GENERATING REPORT::{}'.format(fn_formatted))
-    students = top_students(df, ammount=20)
+    students = top_students(df, ammount=ammount)
     stats = calculate_statistics(students)
 
     wb = openpyxl.load_workbook(filename='destrator/inputs/TEMPLATE_SCORE_Z.xlsx')
