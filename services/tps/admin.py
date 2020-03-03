@@ -5,15 +5,15 @@ from django.utils.html import format_html
 from django.conf import settings
 
 from threading import Thread
-from .models import TPS
+from .models import Report
 from .auxilliary import name_format, download_csv_file, generate_distrator, generate_score_z, generate_tbl, retrieve_drive_files
 import os 
 import io
 import pandas
 import datetime
 
-class TPSAdmin(admin.ModelAdmin):
-    list_display = ('name', 'last_modified', 'answers', 'action')
+class ReportAdmin(admin.ModelAdmin):
+    list_display = ('name', 'last_modified', 'answers', 'download')
 
     list_filter = ('discipline', 'week', 'local', )
     search_fields = ('name', )
@@ -31,17 +31,16 @@ class TPSAdmin(admin.ModelAdmin):
             re_path(r'^download_pdf_score_z/(?P<id>[\w-]+)/$', self.download_pdf_score_z),
             re_path(r'^download_pdf_tbl/(?P<id>[\w-]+)/$', self.download_pdf_tbl),
             re_path(r'^download_pdf_distrator/(?P<id>[\w-]+)/$', self.download_pdf_distrator),
-            re_path(r'^update_tps/(?P<id>[\w-]+)/$', self.update_tps),
+            re_path(r'^update_report/(?P<id>[\w-]+)/$', self.update_report),
         ]
         return my_urls + urls
 
-    def action(self, request):
+    def download(self, request):
         return format_html(
-            '<a class="button" href="download_pdf_score_z/{}">SCORE Z</a>&nbsp'.format(request.id) +
+            '<a class="button" href="download_pdf_score_z/{}">Score Z</a>&nbsp'.format(request.id) +
             '<a class="button" href="download_pdf_tbl/{}">TBL</a>&nbsp'.format(request.id) +
-            '<a class="button" href="download_pdf_distrator/{}">DISTRATOR</a>&nbsp'.format(request.id) +
-            '<a class="button" href="update_tps/{}">UPDATE</a>'.format(request.id))
- 
+            '<a class="button" href="download_pdf_distrator/{}">Distrator</a>&nbsp'.format(request.id))
+
     def get_local(fn):
         return 'BRASÍLIA' if 'BRASÍLIA' in fn else 'JUAZEIRO'
 
@@ -68,20 +67,20 @@ class TPSAdmin(admin.ModelAdmin):
     def update(self, request):
         files = retrieve_drive_files()
         for f in files:
-            tps = None
+            report = None
             data = download_csv_file(f['id'], files)[1]
             csv = pandas.read_csv(data)
-            if TPS.objects.filter(id=f['id']).count():
-                tps = TPS.objects.get(id=f['id'])
-                if tps.answers < csv.shape[0]:
-                    tps.last_modified = datetime.datetime.now()
-                tps.answers = csv.shape[0]
-                tps.data = data.getvalue()
-                tps.local = self.get_local(f['title'])
-                tps.week = self.get_week(f['title'])
-                tps.discipline = self.get_discipline(f['title']) 
+            if Report.objects.filter(id=f['id']).count():
+                report = Report.objects.get(id=f['id'])
+                if report.answers < csv.shape[0]:
+                    report.last_modified = datetime.datetime.now()
+                report.answers = csv.shape[0]
+                report.data = data.getvalue()
+                report.local = self.get_local(f['title'])
+                report.week = self.get_week(f['title'])
+                report.discipline = self.get_discipline(f['title']) 
             else:
-                tps = TPS.objects.create(
+                report = Report.objects.create(
                     id=f['id'],
                     name=name_format(f['title']),
                     url=f['alternateLink'],
@@ -92,36 +91,36 @@ class TPSAdmin(admin.ModelAdmin):
                     week=self.get_week(f['title']),
                     discipline=self.get_discipline(f['title']),
                 )
-            tps.save()
-        self.message_user(request, "TPS atualizados!")
+            report.save()
+        self.message_user(request, "Report atualizados!")
         return HttpResponseRedirect("../")
 
-    def update_tps(self, request, id):
-        tps = None
+    def update_report(self, request, id):
+        report = None
         id = str(id)
         data = download_csv_file(id)[1]
         csv = pandas.read_csv(data)
-        if TPS.objects.filter(id=id).count():
-            tps = TPS.objects.get(id=id)
-            if tps.answers < csv.shape[0]:
-                tps.last_modified = datetime.datetime.now()
-            tps.answers = csv.shape[0]
-            tps.data = data.getvalue()
-            tps.save()
-        self.message_user(request, "TPS atualizado!")
+        if Report.objects.filter(id=id).count():
+            report = Report.objects.get(id=id)
+            if report.answers < csv.shape[0]:
+                report.last_modified = datetime.datetime.now()
+            report.answers = csv.shape[0]
+            report.data = data.getvalue()
+            report.save()
+        self.message_user(request, "Report atualizado!")
         return HttpResponseRedirect("../../")
 
     def download_xlsx(self, request, id):
-        tps = TPS.objects.get(id=id)
-        fn, fdata = name_format(tps.name), io.BytesIO(tps.data)
+        report = Report.objects.get(id=id)
+        fn, fdata = name_format(report.name), io.BytesIO(report.data)
         if '.xlsx' not in fn:
             fn += '.xlsx'  
         output = convert(fn, fdata)
         return FileResponse(open(output, 'rb'), as_attachment=True, filename=fn)
 
     def _gen_pdf(self, id, func):
-        tps = TPS.objects.get(id=id)
-        fn, fdata = name_format(tps.name), io.BytesIO(tps.data)
+        report = Report.objects.get(id=id)
+        fn, fdata = name_format(report.name), io.BytesIO(report.data)
         fn += ' ' + func.upper().replace('_', ' ') + '.pdf'
         output = None
         if func == 'score_z':
@@ -131,7 +130,7 @@ class TPSAdmin(admin.ModelAdmin):
         if func == 'distrator':
             output = generate_distrator(fn, fdata)
 
-        os.system('libreoffice --headless --convert-to pdf "{}" --outdir destrator/outputs/'.format(output))
+        os.system('libreoffice --headless --convert-to pdf "{}" --outdir tps/outputs/'.format(output))
         return FileResponse(open(output.replace('.xlsx', '.pdf'), 'rb'), as_attachment=True, filename=fn)
 
     def download_pdf_score_z(self, request, id):
@@ -143,4 +142,4 @@ class TPSAdmin(admin.ModelAdmin):
     def download_pdf_distrator(self, request, id):
         return self._gen_pdf(id, 'distrator')
 
-admin.site.register(TPS, TPSAdmin)
+admin.site.register(Report, ReportAdmin)

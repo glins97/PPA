@@ -4,8 +4,8 @@ import pandas
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "services.settings")
 django.setup()
 
-from destrator.models import TPS, TPSAnswer
-from destrator.auxilliary import retrieve_drive_files, name_format, download_csv_file
+from tps.models import Report
+from tps.auxilliary import retrieve_drive_files, name_format, download_csv_file
 
 def get_local(fn):
     return 'BRASÍLIA' if 'BRASÍLIA' in fn else 'JUAZEIRO'
@@ -32,20 +32,20 @@ def get_week(fn):
 
 files = retrieve_drive_files()
 for f in files:
-    tps = None
+    report = None
     data = download_csv_file(f['id'], files)[1]
     csv = pandas.read_csv(data)
-    if TPS.objects.filter(id=f['id']).count():
-        tps = TPS.objects.get(id=f['id'])
-        if tps.answers < csv.shape[0]:
-            tps.last_modified = datetime.datetime.now()
-        tps.answers = csv.shape[0]
-        tps.data = data.getvalue()
-        tps.local = local=get_local(f['title'])
-        tps.week = get_week(f['title'])
-        tps.discipline = get_discipline(f['title']) 
+    if Report.objects.filter(id=f['id']).count():
+        report = Report.objects.get(id=f['id'])
+        if report.answers < csv.shape[0]:
+            report.last_modified = datetime.datetime.now()
+        report.answers = csv.shape[0]
+        report.data = data.getvalue()
+        report.local = local=get_local(f['title'])
+        report.week = get_week(f['title'])
+        report.discipline = get_discipline(f['title']) 
     else:
-        tps = TPS.objects.create(
+        report = Report.objects.create(
             id=f['id'],
             name=name_format(f['title']),
             url=f['alternateLink'],
@@ -56,4 +56,4 @@ for f in files:
             week=get_week(f['title']),
             discipline=get_discipline(f['title']),
         )
-    tps.save()
+    report.save()

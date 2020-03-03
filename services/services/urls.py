@@ -16,9 +16,9 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
-admin.site.site_header = "PPA Admin"
-admin.site.site_title = "PPA Admin Portal"
-admin.site.index_title = "Welcome to PPA Admin"
+admin.site.site_header = "PPA Digital"
+admin.site.site_title = "PPA Digital"
+admin.site.index_title = "Bem vindo ao PPA Digital"
 
 urlpatterns = [
     path('admin/', admin.site.urls),

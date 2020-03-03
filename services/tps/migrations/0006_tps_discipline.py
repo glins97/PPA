@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('destrator', '0005_auto_20200302_0156'),
+        ('tps', '0005_auto_20200302_0156'),
     ]
 
     operations = [

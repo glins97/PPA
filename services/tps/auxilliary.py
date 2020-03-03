@@ -26,8 +26,8 @@ def name_format(fn):
 def auth():
     SCOPES = ['https://www.googleapis.com/auth/drive']
     creds = None
-    if os.path.exists('./destrator/credentials/token'):
-        with open('./destrator/credentials/token', 'rb') as token:
+    if os.path.exists('./tps/credentials/token'):
+        with open('./tps/credentials/token', 'rb') as token:
             creds = pickle.load(token)
 
     if not creds or not creds.valid:
@@ -35,9 +35,9 @@ def auth():
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                './destrator/credentials/client_secret.json', SCOPES)
+                './tps/credentials/client_secret.json', SCOPES)
             creds = flow.run_local_server(port=0)
-        with open('./destrator/credentials/token', 'wb') as token:
+        with open('./tps/credentials/token', 'wb') as token:
             pickle.dump(creds, token)
 
     service = build('drive', 'v2', credentials=creds)
@@ -135,7 +135,7 @@ def generate_tbl(fn, fdata=None):
     print(students)
     stats = calculate_statistics(students)
 
-    wb = openpyxl.load_workbook(filename='destrator/inputs/TEMPLATE_TBL.xlsx')
+    wb = openpyxl.load_workbook(filename='tps/inputs/TEMPLATE_TBL.xlsx')
     ws = wb.active
     ws['D3'] = fn_formatted
     ws['G3'] = datetime.datetime.now().strftime('%d/%m/%Y')
@@ -180,8 +180,8 @@ def generate_tbl(fn, fdata=None):
         ws['F' + str(9 + len(students))].border = copy(ws['F6'].border)
         ws['G' + str(9 + len(students))].border = copy(ws['G6'].border)
 
-    wb.save('destrator/outputs/' + fn_formatted.upper() + '_TBL.xlsx')
-    return 'destrator/outputs/' + fn_formatted.upper() + '_TBL.xlsx'
+    wb.save('tps/outputs/' + fn_formatted.upper() + '_TBL.xlsx')
+    return 'tps/outputs/' + fn_formatted.upper() + '_TBL.xlsx'
 
 def generate_score_z(fn, fdata=None):
     print('@GEN SCORE Z>>', fn, fdata)
@@ -195,7 +195,7 @@ def generate_score_z(fn, fdata=None):
     students = top_students(df, ammount=ammount)
     stats = calculate_statistics(students)
 
-    wb = openpyxl.load_workbook(filename='destrator/inputs/TEMPLATE_SCORE_Z.xlsx')
+    wb = openpyxl.load_workbook(filename='tps/inputs/TEMPLATE_SCORE_Z.xlsx')
     ws = wb.active
     ws['D3'] = fn_formatted
     ws['G3'] = datetime.datetime.now().strftime('%d/%m/%Y')
@@ -239,8 +239,8 @@ def generate_score_z(fn, fdata=None):
         ws['F' + str(9 + len(students))].border = copy(ws['F6'].border)
         ws['G' + str(9 + len(students))].border = copy(ws['G6'].border)
 
-    wb.save('destrator/outputs/' + fn_formatted.upper() + '_SCORE_Z.xlsx')
-    return 'destrator/outputs/' + fn_formatted.upper() + '_SCORE_Z.xlsx'
+    wb.save('tps/outputs/' + fn_formatted.upper() + '_SCORE_Z.xlsx')
+    return 'tps/outputs/' + fn_formatted.upper() + '_SCORE_Z.xlsx'
 
 def generate_distrator(fn, fdata=None):
     print('@GEN DISTRATOR >>', fn, fdata)
@@ -255,11 +255,11 @@ def generate_distrator(fn, fdata=None):
     xc.set_title('Frequência de Notas')
      # s is an instance of Series
     fig = xc.get_figure()
-    fig.savefig('destrator/outputs/curve.png')
+    fig.savefig('tps/outputs/curve.png')
     pyplot.close(fig) 
     stats = calculate_statistics(students)
 
-    wb = openpyxl.load_workbook(filename='destrator/inputs/TEMPLATE_DISTRATOR.xlsx')
+    wb = openpyxl.load_workbook(filename='tps/inputs/TEMPLATE_DISTRATOR.xlsx')
     ws = wb.active
     ws['D3'] = fn_formatted
     ws['G3'] = datetime.datetime.now().strftime('%d/%m/%Y')
@@ -279,12 +279,12 @@ def generate_distrator(fn, fdata=None):
             ws[chr(ord('C') + a_index).upper() + str(11 + index)] = stats[question_title][answer]
     
 
-    img = openpyxl.drawing.image.Image('destrator/outputs/curve.png')
+    img = openpyxl.drawing.image.Image('tps/outputs/curve.png')
     img.anchor = 'C22'
     ws.add_image(img)
 
-    wb.save('destrator/outputs/' + fn_formatted.upper() + '_DISTRATOR.xlsx')
-    return 'destrator/outputs/' + fn_formatted.upper() + '_DISTRATOR.xlsx'
+    wb.save('tps/outputs/' + fn_formatted.upper() + '_DISTRATOR.xlsx')
+    return 'tps/outputs/' + fn_formatted.upper() + '_DISTRATOR.xlsx'
 
 
 if __name__ == '__main__':
