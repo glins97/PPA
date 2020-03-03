@@ -6,7 +6,7 @@ from django.conf import settings
 
 from threading import Thread
 from .models import TPS
-from .auxilliary import name_format, download_csv_file, generate_destrator, generate_score_z, generate_tbl, retrieve_drive_files
+from .auxilliary import name_format, download_csv_file, generate_distrator, generate_score_z, generate_tbl, retrieve_drive_files
 import os 
 import io
 import pandas
@@ -30,7 +30,7 @@ class TPSAdmin(admin.ModelAdmin):
         my_urls = [
             re_path(r'^download_pdf_score_z/(?P<id>[\w-]+)/$', self.download_pdf_score_z),
             re_path(r'^download_pdf_tbl/(?P<id>[\w-]+)/$', self.download_pdf_tbl),
-            re_path(r'^download_pdf_destrator/(?P<id>[\w-]+)/$', self.download_pdf_destrator),
+            re_path(r'^download_pdf_distrator/(?P<id>[\w-]+)/$', self.download_pdf_distrator),
             re_path(r'^update_tps/(?P<id>[\w-]+)/$', self.update_tps),
         ]
         return my_urls + urls
@@ -39,7 +39,7 @@ class TPSAdmin(admin.ModelAdmin):
         return format_html(
             '<a class="button" href="download_pdf_score_z/{}">SCORE Z</a>&nbsp'.format(request.id) +
             '<a class="button" href="download_pdf_tbl/{}">TBL</a>&nbsp'.format(request.id) +
-            '<a class="button" href="download_pdf_destrator/{}">DESTRATOR</a>&nbsp'.format(request.id) +
+            '<a class="button" href="download_pdf_distrator/{}">DESTRATOR</a>&nbsp'.format(request.id) +
             '<a class="button" href="update_tps/{}">UPDATE</a>'.format(request.id))
  
     def get_local(fn):
@@ -128,8 +128,8 @@ class TPSAdmin(admin.ModelAdmin):
             output = generate_score_z(fn, fdata)
         if func == 'tbl':
             output = generate_tbl(fn, fdata)
-        if func == 'destrator':
-            output = generate_destrator(fn, fdata)
+        if func == 'distrator':
+            output = generate_distrator(fn, fdata)
 
         os.system('libreoffice --headless --convert-to pdf "{}" --outdir destrator/outputs/'.format(output))
         return FileResponse(open(output.replace('.xlsx', '.pdf'), 'rb'), as_attachment=True, filename=fn)
@@ -140,7 +140,7 @@ class TPSAdmin(admin.ModelAdmin):
     def download_pdf_tbl(self, request, id):
         return self._gen_pdf(id, 'tbl')
 
-    def download_pdf_destrator(self, request, id):
-        return self._gen_pdf(id, 'destrator')
+    def download_pdf_distrator(self, request, id):
+        return self._gen_pdf(id, 'distrator')
 
 admin.site.register(TPS, TPSAdmin)

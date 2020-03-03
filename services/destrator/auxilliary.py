@@ -89,7 +89,7 @@ def top_students(df, ammount=10):
     return df
 
 def bottom_students(df, ammount=10):
-    df = df.sort_values(by=(['xC', 'xA']), ascending=[True, True])[:ammount]
+    df = df.sort_values(by=(['xC', 'xA']), ascending=[True, False])[:ammount][::-1]
     return df
 
 def calculate_statistics(df):
@@ -142,7 +142,7 @@ def generate_tbl(fn, fdata=None):
         
     students = list(students.iterrows())
     if students:
-        ws['G10'] = students[0][1]['xC']
+        # ws['G10'] = students[0][1]['xC']
         ws['C10'] = students[0][1]['xD'].upper()
         ws['B10'] = '1.  '
         ws['B10'].alignment = openpyxl.styles.Alignment(horizontal='right', vertical='center')
@@ -159,7 +159,7 @@ def generate_tbl(fn, fdata=None):
             ws['C' + row].border = copy(ws['A1'].border)
             ws['B' + row].border = copy(ws['B5'].border)
             ws['G' + row].border = copy(ws['G5'].border)
-            ws['G' + row] = student['xC']
+            # ws['G' + row] = student['xC']
             ws['C' + row] = student['xD'].upper()
             ws['B' + row] = '{}.  '.format(index + 2)
             ws['B' + row].alignment = openpyxl.styles.Alignment(horizontal='right', vertical='center')
@@ -195,7 +195,7 @@ def generate_score_z(fn, fdata=None):
         
     students = list(students.iterrows())
     if students:
-        ws['G10'] = students[0][1]['xC']
+        # ws['G10'] = students[0][1]['xC']
         ws['C10'] = students[0][1]['xD'].upper()
         ws['B10'] = '1.  '
         ws['B10'].alignment = openpyxl.styles.Alignment(horizontal='right', vertical='center')
@@ -212,7 +212,7 @@ def generate_score_z(fn, fdata=None):
             ws['C' + row].border = copy(ws['A1'].border)
             ws['B' + row].border = copy(ws['B5'].border)
             ws['G' + row].border = copy(ws['G5'].border)
-            ws['G' + row] = student['xC']
+            # ws['G' + row] = student['xC']
             ws['C' + row] = student['xD'].upper()
             ws['B' + row] = '{}.  '.format(index + 2)
             ws['B' + row].alignment = openpyxl.styles.Alignment(horizontal='right', vertical='center')
@@ -228,12 +228,12 @@ def generate_score_z(fn, fdata=None):
     wb.save('destrator/outputs/' + fn_formatted.upper() + '_SCORE_Z.xlsx')
     return 'destrator/outputs/' + fn_formatted.upper() + '_SCORE_Z.xlsx'
 
-def generate_destrator(fn, fdata=None):
-    print('@GEN DESTRATOR >>', fn, fdata)
+def generate_distrator(fn, fdata=None):
+    print('@GEN DISTRATOR >>', fn, fdata)
     fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('.csv', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
     df = load_csv(fdata if fdata else fn)
-    print('GEN DESTRATOR>>SHAPE::', df.shape)
-    print('GEN DESTRATOR>>GENERATING REPORT::{}'.format(fn_formatted))
+    print('GEN DISTRATOR>>SHAPE::', df.shape)
+    print('GEN DISTRATOR>>GENERATING REPORT::{}'.format(fn_formatted))
     students = df
     xc = students['xC'].hist(bins=range(12), range=(0, 11), alpha=0.5, align='left', color='black')
     xc.set_ylabel('Frequência')
@@ -245,7 +245,7 @@ def generate_destrator(fn, fdata=None):
     pyplot.close(fig) 
     stats = calculate_statistics(students)
 
-    wb = openpyxl.load_workbook(filename='destrator/inputs/TEMPLATE_DESTRATOR.xlsx')
+    wb = openpyxl.load_workbook(filename='destrator/inputs/TEMPLATE_DISTRATOR.xlsx')
     ws = wb.active
     ws['D3'] = fn_formatted
     ws['G3'] = datetime.datetime.now().strftime('%d/%m/%Y')
@@ -269,8 +269,8 @@ def generate_destrator(fn, fdata=None):
     img.anchor = 'C22'
     ws.add_image(img)
 
-    wb.save('destrator/outputs/' + fn_formatted.upper() + '_DESTRATOR.xlsx')
-    return 'destrator/outputs/' + fn_formatted.upper() + '_DESTRATOR.xlsx'
+    wb.save('destrator/outputs/' + fn_formatted.upper() + '_DISTRATOR.xlsx')
+    return 'destrator/outputs/' + fn_formatted.upper() + '_DISTRATOR.xlsx'
 
 
 if __name__ == '__main__':
