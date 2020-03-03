@@ -14,7 +14,6 @@ import datetime
 
 class ReportAdmin(admin.ModelAdmin):
     list_display = ('name', 'last_modified', 'answers', 'download')
-
     list_filter = ('discipline', 'week', 'local', )
     search_fields = ('name', )
     list_per_page = 20
@@ -39,68 +38,6 @@ class ReportAdmin(admin.ModelAdmin):
             '<a class="button" href="download_pdf_score_z/{}">Score Z</a>&nbsp'.format(request.id) +
             '<a class="button" href="download_pdf_tbl/{}">TBL</a>&nbsp'.format(request.id) +
             '<a class="button" href="download_pdf_distrator/{}">Distrator</a>&nbsp'.format(request.id))
-
-    def get_local(fn):
-        return 'BRASÍLIA' if 'BRASÍLIA' in fn else 'JUAZEIRO'
-
-    def get_discipline(fn):
-        discs = {
-            'FÍS': ['FÍS', 'FIS'],
-            'QUÍ': ['QUÍ', 'QUI'],
-            'MAT': ['MAT'],
-            'BIO': ['BIO'],
-            }
-        for disc in discs:
-            for alias in discs[disc]:
-                if alias in fn:
-                    return disc
-        return '-'
-
-    def get_week(fn):
-        weeks = ['SEM' + str(item) for item in range(1, 34)] + ['SEM ' + str(item) for item in range(1, 34)] 
-        for week in weeks:
-            if week in fn:
-                return week
-        return '-'
- 
-    def update(self, request):
-        files = retrieve_drive_files()
-        for f in files:
-            report = None
-            data = download_csv_file(f['id'], files)[1]
-            csv = pandas.read_csv(data)
-            if Report.objects.filter(id=f['id']).count():
-                report = Report.objects.get(id=f['id'])
-                if report.answers < csv.shape[0]:
-                    report.last_modified = datetime.datetime.now()
-                report.answers = csv.shape[0]
-                report.data = data.getvalue()
-                report.local = self.get_local(f['title'])
-                report.week = self.get_week(f['title'])
-                report.discipline = self.get_discipline(f['title']) 
-            else:
-                report = Report.objects.create(
-                    id=f['id'],
-                    name=name_format(f['title']),
-                    url=f['alternateLink'],
-                    last_modified=datetime.datetime.now(),
-                    answers=csv.shape[0],
-                    data=data.getvalue(),
-                    local=self.get_local(f['title']),
-                    week=self.get_week(f['title']),
-                    discipline=self.get_discipline(f['title']),
-                )
-            report.save()
-        self.message_user(request, "Report atualizados!")
-        return HttpResponseRedirect("../")
-
-    def download_xlsx(self, request, id):
-        report = Report.objects.get(id=id)
-        fn, fdata = name_format(report.name), io.BytesIO(report.data)
-        if '.xlsx' not in fn:
-            fn += '.xlsx'  
-        output = convert(fn, fdata)
-        return FileResponse(open(output, 'rb'), as_attachment=True, filename=fn)
 
     def _gen_pdf(self, id, func):
         report = Report.objects.get(id=id)
