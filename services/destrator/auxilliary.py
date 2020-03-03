@@ -124,7 +124,7 @@ def duplicate(ws, origin, destination):
 
 def generate_tbl(fn, fdata=None):
     print('@GEN TBL>>', fn, fdata)
-    fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('.csv', '').replace('.pdf', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
+    fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('  ', ' ').replace('.csv', '').replace('.pdf', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
     df = load_csv(fdata if fdata else fn)
     ammount = 20
     if 'BRASÍLIA' in fn:
@@ -139,13 +139,17 @@ def generate_tbl(fn, fdata=None):
     ws = wb.active
     ws['D3'] = fn_formatted
     ws['G3'] = datetime.datetime.now().strftime('%d/%m/%Y')
-    ws['C6'] = 'MAIOR: {:.2f}'.format(stats['MAX'])
-    ws['D6'] = 'MENOR: {:.2f}'.format(stats['MIN'])
-    ws['E6'] = 'MÉDIA: {:.2f}'.format(stats['MEAN'])
-    ws['F6'] = 'DESVIO: {:.2f}'.format(stats['STD'])
+    ws['C6'] = 'MAIOR: 0'
+    ws['D6'] = 'MENOR: 0'
+    ws['E6'] = 'MÉDIA: 0'
+    ws['F6'] = 'DESVIO: 0'
         
     students = list(students.iterrows())
     if students and df.shape[0] > ammount:
+        ws['C6'] = 'MAIOR: {:.2f}'.format(stats['MAX'])
+        ws['D6'] = 'MENOR: {:.2f}'.format(stats['MIN'])
+        ws['E6'] = 'MÉDIA: {:.2f}'.format(stats['MEAN'])
+        ws['F6'] = 'DESVIO: {:.2f}'.format(stats['STD'])
         # ws['G10'] = students[0][1]['xC']
         ws['C10'] = students[0][1]['xD'].upper()
         ws['B10'] = '1.  '
@@ -184,7 +188,7 @@ def generate_score_z(fn, fdata=None):
     ammount = 20
     if 'BRASÍLIA' in fn:
         ammount = 10
-    fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('.csv', '').replace('.pdf', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
+    fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('  ', ' ').replace('.csv', '').replace('.pdf', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
     df = load_csv(fdata if fdata else fn)
     print('GEN SCORE Z>>SHAPE::', df.shape)
     print('GEN SCORE Z>>GENERATING REPORT::{}'.format(fn_formatted))
@@ -195,13 +199,16 @@ def generate_score_z(fn, fdata=None):
     ws = wb.active
     ws['D3'] = fn_formatted
     ws['G3'] = datetime.datetime.now().strftime('%d/%m/%Y')
-    ws['C6'] = 'MAIOR: {:.2f}'.format(stats['MAX'])
-    ws['D6'] = 'MENOR: {:.2f}'.format(stats['MIN'])
-    ws['E6'] = 'MÉDIA: {:.2f}'.format(stats['MEAN'])
-    ws['F6'] = 'DESVIO: {:.2f}'.format(stats['STD'])
-        
+    ws['C6'] = 'MAIOR: 0'
+    ws['D6'] = 'MENOR: 0'
+    ws['E6'] = 'MÉDIA: 0'
+    ws['F6'] = 'DESVIO: 0'
     students = list(students.iterrows())
     if students:
+        ws['C6'] = 'MAIOR: {:.2f}'.format(stats['MAX'])
+        ws['D6'] = 'MENOR: {:.2f}'.format(stats['MIN'])
+        ws['E6'] = 'MÉDIA: {:.2f}'.format(stats['MEAN'])
+        ws['F6'] = 'DESVIO: {:.2f}'.format(stats['STD'])
         # ws['G10'] = students[0][1]['xC']
         ws['C10'] = students[0][1]['xD'].upper()
         ws['B10'] = '1.  '
@@ -237,7 +244,7 @@ def generate_score_z(fn, fdata=None):
 
 def generate_distrator(fn, fdata=None):
     print('@GEN DISTRATOR >>', fn, fdata)
-    fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('.csv', '').replace('.pdf', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
+    fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('  ', ' ').replace('.csv', '').replace('.pdf', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
     df = load_csv(fdata if fdata else fn)
     print('GEN DISTRATOR>>SHAPE::', df.shape)
     print('GEN DISTRATOR>>GENERATING REPORT::{}'.format(fn_formatted))
