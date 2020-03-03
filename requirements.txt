@@ -1,0 +1,8 @@
+django
+openpyxl
+google-api-python-client
+google-auth-oauthlib
+pandas
+numpy
+matplotlib
+pillow
