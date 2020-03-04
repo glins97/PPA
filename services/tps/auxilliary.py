@@ -67,19 +67,8 @@ def retrieve_drive_files():
         print(item['title'])
     return result
 
-def download_csv_file(id, files=None):
-    if files is None:
-        files = retrieve_drive_files()
-    HEADERS = b'"xA","xB","xC","xD","Q01","Q02","Q03","Q04","Q05","Q06","Q07","Q08","Q09","Q10"'
-    for item in files:
-        if item['id'] == id:
-            data = service.files().export(fileId=item['id'], mimeType='text/csv').execute()
-            data = b'\n'.join([HEADERS] + data.split(b'\n')[1:])
-            print('@download_csv_file', item['title'])
-            return item['title'], io.BytesIO(data)
-
 def download_by_id(file_id):
-    # print('@download_by_id', file_id)
+    print('@download_by_id', file_id)
     HEADERS = b'"xA","xB","xC","xD","Q01","Q02","Q03","Q04","Q05","Q06","Q07","Q08","Q09","Q10"'
     data = service.files().export(fileId=file_id, mimeType='text/csv').execute()
     data = b'\n'.join([HEADERS] + data.split(b'\n')[1:])
@@ -284,7 +273,6 @@ def generate_distrator(fn, fdata=None):
         for a_index, answer in enumerate(answers):
             ws[chr(ord('C') + a_index).upper() + str(11 + index)] = stats[question_title][answer]
     
-
     img = openpyxl.drawing.image.Image('tps/outputs/curve.png')
     img.anchor = 'C22'
     ws.add_image(img)

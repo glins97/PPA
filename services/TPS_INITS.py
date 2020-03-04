@@ -5,7 +5,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "services.settings")
 django.setup()
 
 from tps.models import Report
-from tps.auxilliary import retrieve_drive_files, name_format, download_csv_file
+from tps.auxilliary import retrieve_drive_files, name_format, download_by_id
 
 def get_local(fn):
     return 'BRASÍLIA' if 'BRASÍLIA' in fn else 'JUAZEIRO'
@@ -33,7 +33,7 @@ def get_week(fn):
 files = retrieve_drive_files()
 for f in files:
     report = None
-    data = download_csv_file(f['id'], files)[1]
+    data = download_by_id(f['id'])
     csv = pandas.read_csv(data)
     if Report.objects.filter(id=f['id']).count():
         report = Report.objects.get(id=f['id'])
