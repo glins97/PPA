@@ -31,7 +31,7 @@ if not creds or not creds.valid:
         creds.refresh(Request())
     else:
         flow = InstalledAppFlow.from_client_secrets_file(
-            './tps/credentials/client_secret.json', SCOPES)
+            './tps/credentials/credentials.json', SCOPES)
         creds = flow.run_local_server(port=0)
     with open('./tps/credentials/token', 'wb') as token:
         pickle.dump(creds, token)
