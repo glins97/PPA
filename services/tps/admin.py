@@ -22,6 +22,8 @@ class ReportAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
+        print(request)
+        print(request.user)
         return False
 
     def get_urls(self):
@@ -50,7 +52,7 @@ class ReportAdmin(admin.ModelAdmin):
         if func == 'tbl':
             output = generate_tbl(fn, fdata)
         if func == 'distrator':
-            output = generate_distrator(fn, fdata)
+            output = generate_distrator(fn, fdata, report)
 
         os.system('libreoffice --headless --convert-to pdf "{}" --outdir tps/outputs/'.format(output))
         return FileResponse(open(output.replace('.xlsx', '.pdf'), 'rb'), as_attachment=True, filename=fn)

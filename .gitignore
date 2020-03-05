@@ -5,3 +5,4 @@
 services/db.sqlite3
 *.png
 *.xlsx
+*.log

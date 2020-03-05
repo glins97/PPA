@@ -237,7 +237,7 @@ def generate_score_z(fn, fdata=None):
     wb.save('tps/outputs/' + fn_formatted.upper() + '_SCORE_Z.xlsx')
     return 'tps/outputs/' + fn_formatted.upper() + '_SCORE_Z.xlsx'
 
-def generate_distrator(fn, fdata=None):
+def generate_distrator(fn, fdata=None, report=None):
     # print('@GEN DISTRATOR >>', fn, fdata)
     fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('  ', ' ').replace('.csv', '').replace('.pdf', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
     df = load_csv(fdata if fdata else fn)
@@ -256,7 +256,7 @@ def generate_distrator(fn, fdata=None):
 
     wb = openpyxl.load_workbook(filename='tps/inputs/TEMPLATE_DISTRATOR.xlsx')
     ws = wb.active
-    ws['D3'] = fn_formatted
+    ws['C3'] = fn_formatted
     ws['G3'] = datetime.datetime.now().strftime('%d/%m/%Y')
     ws['C6'] = 'MAIOR: {:.2f}'.format(stats['MAX'])
     ws['D6'] = 'MENOR: {:.2f}'.format(stats['MIN'])
@@ -270,8 +270,12 @@ def generate_distrator(fn, fdata=None):
     for index, question_id in enumerate(['01', '02', '03', '04', '05', '06', '07', '08', '09', '10']):
         question_title = 'Q{}'.format(question_id)
         answers = ['A', 'B', 'C', 'D', 'E']
+        correct_answer = getattr(report, 'correct_answer_' + str(index + 1))
         for a_index, answer in enumerate(answers):
-            ws[chr(ord('C') + a_index).upper() + str(11 + index)] = stats[question_title][answer]
+            text = str(stats[question_title][answer])
+            if answer == correct_answer:
+                text = '   ' + text + ' ✓'
+            ws[chr(ord('C') + a_index).upper() + str(11 + index)] = text 
     
     img = openpyxl.drawing.image.Image('tps/outputs/curve.png')
     img.anchor = 'C22'

@@ -18,6 +18,16 @@ class Report(models.Model):
     last_modified = models.DateField(verbose_name='última modificação')
     answers = models.IntegerField(verbose_name='respostas')
     data = models.BinaryField()
+    correct_answer_1 = models.CharField(verbose_name='gabarito questão 1', max_length=1, choices=choices, default='')
+    correct_answer_2 = models.CharField(verbose_name='gabarito questão 2', max_length=1, choices=choices, default='')
+    correct_answer_3 = models.CharField(verbose_name='gabarito questão 3', max_length=1, choices=choices, default='')
+    correct_answer_4 = models.CharField(verbose_name='gabarito questão 4', max_length=1, choices=choices, default='')
+    correct_answer_5 = models.CharField(verbose_name='gabarito questão 5', max_length=1, choices=choices, default='')
+    correct_answer_6 = models.CharField(verbose_name='gabarito questão 6', max_length=1, choices=choices, default='')
+    correct_answer_7 = models.CharField(verbose_name='gabarito questão 7', max_length=1, choices=choices, default='')
+    correct_answer_8 = models.CharField(verbose_name='gabarito questão 8', max_length=1, choices=choices, default='')
+    correct_answer_9 = models.CharField(verbose_name='gabarito questão 9', max_length=1, choices=choices, default='')
+    correct_answer_10 = models.CharField(verbose_name='gabarito questão 10', max_length=1, choices=choices, default='')
 
     def update(self):
         print('@report.update')
