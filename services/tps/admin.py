@@ -22,7 +22,7 @@ class ReportAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
-        if request.user == 'glins':
+        if request.user.username == 'glins':
             return True
         return False
 
