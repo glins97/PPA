@@ -16,7 +16,9 @@ import time
 options = Options()
 options.add_argument("--headless")
 
+print('@driver request')
 driver = webdriver.Firefox(firefox_options=options)
+print('@driver load')
 driver.get('https://soundcloud.com/signin')
 print('@soundcloud')
 time.sleep(2)
@@ -24,7 +26,7 @@ time.sleep(2)
 gmail_login = driver.find_element_by_class_name('sc-button-google')
 gmail_login.click()
 print('@soundcloud -> gmail login requested')
-time.sleep(2)
+time.sleep(5)
 
 before, after = driver.window_handles[0], driver.window_handles[1]
 driver.switch_to_window(after)
@@ -33,7 +35,7 @@ login = driver.find_element_by_id('identifierId')
 login.send_keys('romullo.quimica')
 login.send_keys(Keys.RETURN)
 print('@soundcloud -> gmail username ok')
-time.sleep(2)
+time.sleep(5)
 
 password = driver.find_element_by_name('password')
 password.send_keys('qazxsaq5601')
