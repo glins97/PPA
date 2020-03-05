@@ -15,6 +15,8 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.keys import Keys
 import time
 
+WAIT_TIMEOUT_VALUE = 60
+
 # do login
 options = Options()
 options.add_argument("--headless")
@@ -25,7 +27,7 @@ print('@driver load')
 driver.get('https://soundcloud.com/signin')
 print('@soundcloud')
 
-WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'sc-button-google')))
+WebDriverWait(driver, WAIT_TIMEOUT_VALUE).until(EC.presence_of_element_located((By.CLASS_NAME, 'sc-button-google')))
 gmail_login = driver.find_element_by_class_name('sc-button-google')
 gmail_login.click()
 print('@soundcloud -> gmail login requested')
@@ -34,13 +36,13 @@ time.sleep(5)
 before, after = driver.window_handles[0], driver.window_handles[1]
 driver.switch_to_window(after)
 
-WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, 'identifierId')))
+WebDriverWait(driver, WAIT_TIMEOUT_VALUE).until(EC.presence_of_element_located((By.ID, 'identifierId')))
 login = driver.find_element_by_id('identifierId')
 login.send_keys('romullo.quimica')
 login.send_keys(Keys.RETURN)
 print('@soundcloud -> gmail username ok')
 
-WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, 'password')))
+WebDriverWait(driver, WAIT_TIMEOUT_VALUE).until(EC.presence_of_element_located((By.NAME, 'password')))
 password = driver.find_element_by_name('password')
 password.send_keys('qazxsaq5601')
 password.send_keys(Keys.RETURN)
@@ -82,18 +84,18 @@ for item in result:
         url = 'https://docs.google.com/forms/d/{}/edit'.format(item['id'])
         driver.get(url)
         
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'freebirdFormeditorViewItemTitleRow')))
+        WebDriverWait(driver, WAIT_TIMEOUT_VALUE).until(EC.presence_of_element_located((By.CLASS_NAME, 'freebirdFormeditorViewItemTitleRow')))
         title = driver.find_elements_by_class_name('freebirdFormeditorViewItemTitleRow')[1]
         title.click()
 
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'freebirdFormeditorViewQuestionFooterWide')))
+        WebDriverWait(driver, WAIT_TIMEOUT_VALUE).until(EC.presence_of_element_located((By.CLASS_NAME, 'freebirdFormeditorViewQuestionFooterWide')))
         check_answers_btn = driver.find_elements_by_class_name('freebirdFormeditorViewQuestionFooterWide')
         for item in check_answers_btn:
             if item.text == 'Chave de resposta':
                 item.click()
                 break
 
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'freebirdFormeditorViewAssessmentGridbodyCorrectAnswerToggle')))
+        WebDriverWait(driver, WAIT_TIMEOUT_VALUE).until(EC.presence_of_element_located((By.CLASS_NAME, 'freebirdFormeditorViewAssessmentGridbodyCorrectAnswerToggle')))
         answers = driver.find_elements_by_class_name('freebirdFormeditorViewAssessmentGridbodyCorrectAnswerToggle')
         correct_answers = ['ABCDE'[[answer.get_attribute('aria-checked') for answer in answers[i:i+5]].index('true')] for i in range(0, 50, 5)]
         form_correct_answers = {'correct_answer_' + str(i + 1): correct_answers[i] for i in range(0, 10)}
