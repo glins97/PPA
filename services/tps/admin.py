@@ -22,8 +22,8 @@ class ReportAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
-        print(request)
-        print(request.user)
+        if request.user == 'glins':
+            return True
         return False
 
     def get_urls(self):
