@@ -1,5 +1,0 @@
-from django.apps import AppConfig
-
-
-class DestratorConfig(AppConfig):
-    name = 'tps'
