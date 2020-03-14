@@ -163,7 +163,7 @@ class Redaction(models.Model):
     grade_5 = models.IntegerField(verbose_name='competência 5', default=0)
     grades_average = models.IntegerField(verbose_name='nota', default=0, editable=False)
     date = models.DateTimeField(verbose_name='data de correção', blank=True, null=True, editable=False)
-    file = models.FileField(verbose_name='correção', upload_to=redactions_upload_to, null=True, blank=True)
+    file = models.FileField(verbose_name='correção', upload_to=redactions_upload_to)
 
     class Meta:
         verbose_name = 'correção'
