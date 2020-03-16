@@ -8,6 +8,7 @@ from threading import Thread
 from .models import Report
 from .auxilliary import *
 import os 
+import subprocess
 import io
 import pandas
 import datetime
@@ -54,8 +55,9 @@ class ReportAdmin(admin.ModelAdmin):
         if func == 'distrator':
             output = generate_distrator(fn, fdata, report)
 
-        os.system('libreoffice --headless --convert-to pdf "{}" --outdir tps/outputs/'.format(output))
-        return FileResponse(open(output.replace('.xlsx', '.pdf'), 'rb'), as_attachment=True, filename=fn)
+        print(output)
+        subprocess.call(['libreoffice', '--headless', '--convert-to',  'pdf', output, '--outdir', 'tps/outputs/pdfs'])
+        return FileResponse(open(output.replace('xlsx', 'pdf'), 'rb'), as_attachment=True, filename=fn)
 
     def download_pdf_score_z(self, request, id):
         return self._gen_pdf(id, 'score_z')

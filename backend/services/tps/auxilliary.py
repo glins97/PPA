@@ -117,9 +117,12 @@ def duplicate(ws, origin, destination):
     if (ws.row_dimensions[get_row(origin)].height == 7.5):
         ws.row_dimensions[get_row(destination)].height = 7.5
 
+def format_fn(fn):
+    return fn.replace('inputs/', '').replace('(respostas)', '').replace('  ', ' ').replace(' ', '_').replace('.csv', '').replace('.pdf', '').replace('.xlsx', '').replace('-', '_').strip()
+    
 def generate_tbl(fn, fdata=None):
     # print('@GEN TBL>>', fn, fdata)
-    fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('  ', ' ').replace('.csv', '').replace('.pdf', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
+    fn_formatted = format_fn(fn)
     df = load_csv(fdata if fdata else fn)
     ammount = 20
     if 'BRASÍLIA' in fn:
@@ -175,15 +178,15 @@ def generate_tbl(fn, fdata=None):
         ws['F' + str(9 + len(students))].border = copy(ws['F6'].border)
         ws['G' + str(9 + len(students))].border = copy(ws['G6'].border)
 
-    wb.save('tps/outputs/' + fn_formatted.upper() + '_TBL.xlsx')
-    return 'tps/outputs/' + fn_formatted.upper() + '_TBL.xlsx'
+    wb.save('tps/outputs/xlsxs/' + fn_formatted.upper() + '.xlsx')
+    return 'tps/outputs/xlsxs/' + fn_formatted.upper() + '.xlsx'
 
 def generate_score_z(fn, fdata=None):
     # print('@GEN SCORE Z>>', fn, fdata)
     ammount = 20
     if 'BRASÍLIA' in fn:
         ammount = 10
-    fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('  ', ' ').replace('.csv', '').replace('.pdf', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
+    fn_formatted = format_fn(fn)
     df = load_csv(fdata if fdata else fn)
     # print('GEN SCORE Z>>SHAPE::', df.shape)
     # print('GEN SCORE Z>>GENERATING REPORT::{}'.format(fn_formatted))
@@ -234,12 +237,13 @@ def generate_score_z(fn, fdata=None):
         ws['F' + str(9 + len(students))].border = copy(ws['F6'].border)
         ws['G' + str(9 + len(students))].border = copy(ws['G6'].border)
 
-    wb.save('tps/outputs/' + fn_formatted.upper() + '_SCORE_Z.xlsx')
-    return 'tps/outputs/' + fn_formatted.upper() + '_SCORE_Z.xlsx'
+    print(fn_formatted.replace(' ', '_'))
+    wb.save('tps/outputs/xlsxs/' + fn_formatted.upper() + '.xlsx')
+    return 'tps/outputs/xlsxs/' + fn_formatted.upper() + '.xlsx'
 
 def generate_distrator(fn, fdata=None, report=None):
     # print('@GEN DISTRATOR >>', fn, fdata)
-    fn_formatted = fn.replace('inputs/', '').replace('(respostas)', '').replace('  ', ' ').replace('.csv', '').replace('.pdf', '').replace('.xlsx', '').replace('-', '').replace('  ', ' ').strip()
+    fn_formatted = format_fn(fn)
     df = load_csv(fdata if fdata else fn)
     # print('GEN DISTRATOR>>SHAPE::', df.shape)
     # print('GEN DISTRATOR>>GENERATING REPORT::{}'.format(fn_formatted))
@@ -250,7 +254,7 @@ def generate_distrator(fn, fdata=None, report=None):
     xc.set_title('Frequência de Notas')
      # s is an instance of Series
     fig = xc.get_figure()
-    fig.savefig('tps/outputs/curve.png')
+    fig.savefig('tps/outputs/xlsxs/curve.png')
     pyplot.close(fig) 
     stats = calculate_statistics(students)
 
@@ -277,12 +281,12 @@ def generate_distrator(fn, fdata=None, report=None):
                 text = '   ' + text + ' ✓'
             ws[chr(ord('C') + a_index).upper() + str(11 + index)] = text 
     
-    img = openpyxl.drawing.image.Image('tps/outputs/curve.png')
+    img = openpyxl.drawing.image.Image('tps/outputs/xlsxs/curve.png')
     img.anchor = 'C22'
     ws.add_image(img)
 
-    wb.save('tps/outputs/' + fn_formatted.upper() + '_DISTRATOR.xlsx')
-    return 'tps/outputs/' + fn_formatted.upper() + '_DISTRATOR.xlsx'
+    wb.save('tps/outputs/xlsxs/' + fn_formatted.upper() + '.xlsx')
+    return 'tps/outputs/xlsxs/' + fn_formatted.upper() + '.xlsx'
 
 
 if __name__ == '__main__':
