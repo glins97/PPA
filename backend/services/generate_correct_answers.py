@@ -10,6 +10,7 @@ from tps.auxilliary import *
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import time
+import pickle
 
 # do login
 driver = webdriver.Firefox()
@@ -58,15 +59,17 @@ while True:
 # -------------------
 
 # gets correct answers
-for item in result:
-    print('GET', item['title'], end=' -> ')
+answers = {}
+with open('answers', 'rb') as handle:
+    answers = pickle.load(handle)
+
+for tps in sorted(result, key=lambda item: item['title']):
     try:
-        report = Report.objects.get(name=name_format(item['title']))
-        if report.correct_answer_10 != '':
-            print('ALREADY DONE')
+        if name_format(tps['title']) in answers:
             continue
 
-        url = 'https://docs.google.com/forms/d/{}/edit'.format(item['id'])
+        print('GET', tps['title'], end=' -> ')
+        url = 'https://docs.google.com/forms/d/{}/edit'.format(tps['id'])
         driver.get(url)
         time.sleep(1)
 
@@ -81,39 +84,20 @@ for item in result:
                 time.sleep(1)
                 break
 
-        answers = driver.find_elements_by_class_name('freebirdFormeditorViewAssessmentGridbodyCorrectAnswerToggle')
-        correct_answers = ['ABCDE'[[answer.get_attribute('aria-checked') for answer in answers[i:i+5]].index('true')] for i in range(0, 50, 5)]
+        form_answers = driver.find_elements_by_class_name('freebirdFormeditorViewAssessmentGridbodyCorrectAnswerToggle')
+        correct_answers = ['ABCDE'[[answer.get_attribute('aria-checked') for answer in form_answers[i:i+5]].index('true')] for i in range(0, 50, 5)]
         form_correct_answers = {'correct_answer_' + str(i + 1): correct_answers[i] for i in range(0, 10)}
-        # count = 0
-        # row_analytics = driver.find_element_by_class_name('freebirdAnalyticsViewRowNavigation')
-        # form_correct_answers = {}
-        # previous_line_btn, next_line_btn = row_analytics.find_elements_by_class_name('freebirdAnalyticsViewNavigationButton')
-        # while count < 10:
-        #     count += 1
-        #     question_id = row_analytics.find_element_by_class_name('freebirdAnalyticsViewRowPrefix').text.split()[1][:-1]
-        #     container = driver.find_element_by_class_name('freebirdAnalyticsViewChartContainer')
-        #     texts = container.find_elements_by_xpath("//div/*/*/*/*/*[name()='g']")
-        #     correct = None
-        #     for text in texts:
-        #         size = len(text.text)
-        #         if not size or size > 3: continue
-        #         for answer in 'ABCDE':
-        #             if answer + '|' in text.text + '|':
-        #                 if size == 3:
-        #                     correct = answer
-        #     form_correct_answers['correct_answer_'  + question_id] = correct
-        #     next_line_btn.click()
-        #     time.sleep(1)
-        
-        for q in range(1, 11):
-            qid = 'correct_answer_' + str(q)
-            setattr(report, qid, form_correct_answers[qid])
-        report.save()
+        answers[name_format(tps['title'])] = form_correct_answers
         print('DONE')
-
-    except:
-        print('\n################################')
-        print('FAIL AT @', item['title'])
-        print('################################')
-        pass
+        with open('answers', 'wb') as handle:
+            pickle.dump(answers, handle)
+    except Exception as e:
+        answers[name_format(tps['title'])] = None
+        print('FAILED ->', e)
+        with open('answers', 'wb') as handle:
+            pickle.dump(answers, handle)
 # -------------------
+
+driver.close()
+with open('answers', 'wb') as handle:
+    pickle.dump(answers, handle)

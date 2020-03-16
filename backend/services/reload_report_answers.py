@@ -39,6 +39,7 @@ for f in files:
         report = Report.objects.get(id=f['id'])
         if report.answers < csv.shape[0]:
             report.last_modified = datetime.datetime.now()
+            print(' --> UPDATED')
         report.answers = csv.shape[0]
         report.data = data.getvalue()
     else:
