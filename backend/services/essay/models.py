@@ -96,6 +96,7 @@ class Essay(models.Model):
         verbose_name_plural = 'redações'
 
     def add_redaction(self, redaction):
+        self.file = redaction.file
         self.redactions.add(redaction)
         self.last_redaction = redaction
         self.final_grade = 0

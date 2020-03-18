@@ -31,6 +31,8 @@ class EssayAdmin(admin.ModelAdmin):
         urls = super().get_urls()
         my_urls = [
             re_path(r'.+(?P<dir>uploads/essays/)(?P<fn>.+)/$', self.download),
+            re_path(r'.+(?P<dir>uploads/redactions/)(?P<fn>.+)/$', self.download),
+            re_path(r'.+(uploads/latest/)(?P<pk>.+)/$', self.latest),
             re_path(r'send/(?P<id>.+)/$', self.send),
         ]
         return my_urls + urls
@@ -38,8 +40,11 @@ class EssayAdmin(admin.ModelAdmin):
     def download(self, request, dir, fn):
         return FileResponse(open(dir + fn, 'rb'), as_attachment=True, filename=fn)
 
+    def latest(self, request, pk):
+        return HttpResponseRedirect('../../../{url}'.format(url=Essay.objects.get(pk=pk).file.name))
+
     def arquivo(self, request):
-        return format_html('<a href="view/uploads/essays/{url}">Download</a>&nbsp'.format(url=request.file.name.split('/')[-1]))
+        return format_html('<a href="view/uploads/latest/{pk}">Download</a>&nbsp'.format(pk=request.pk))
     
     def send(self, request, id):
         # TODO: JOIN PDFS, SEND IT
