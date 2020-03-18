@@ -91,7 +91,7 @@ class Essay(models.Model):
     triage_done = models.BooleanField(editable=False, default=False)
 
     class Meta:
-        ordering = ('-upload_date', 'has_essay', '-has_correction')
+        ordering = ('upload_date', 'has_essay', '-has_correction')
         verbose_name = 'redação'
         verbose_name_plural = 'redações'
 
