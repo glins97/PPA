@@ -91,7 +91,7 @@ class Essay(models.Model):
     triage_done = models.BooleanField(editable=False, default=False)
 
     class Meta:
-        ordering = ('upload_date', 'has_essay', '-has_correction')
+        ordering = ('-upload_date', 'has_essay', '-has_correction')
         verbose_name = 'redação'
         verbose_name_plural = 'redações'
 
@@ -119,8 +119,8 @@ class Essay(models.Model):
             file_dir = str(self.file)
             print('FILE:', file_dir)
             if '.png' in file_dir.lower() or '.jpg' in file_dir.lower():
-                subprocess.call(['convert', file_dir, file_dir[:-3] + '.pdf'])
-                file_dir = file_dir[:-3] + '.pdf'
+                subprocess.call(['convert', file_dir, file_dir[:-4] + '.pdf'])
+                file_dir = file_dir[:-4] + '.pdf'
 
             output = file_dir.replace('.pdf', '_.pdf')
             subprocess.call(['pdftk', file_dir, 'essay/inputs/MODEL.pdf', 'cat',  'output', output])
