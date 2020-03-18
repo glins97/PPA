@@ -39,7 +39,7 @@ class EssayAdmin(admin.ModelAdmin):
         return FileResponse(open(dir + fn, 'rb'), as_attachment=True, filename=fn)
 
     def arquivo(self, request):
-        return format_html('<a href="view/uploads/essays/{url}">{url}</a>&nbsp'.format(url=request.file.name.split('/')[-1]))
+        return format_html('<a href="view/uploads/essays/{url}">Download</a>&nbsp'.format(url=request.file.name.split('/')[-1]))
     
     def send(self, request, id):
         # TODO: JOIN PDFS, SEND IT

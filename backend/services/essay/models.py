@@ -4,8 +4,7 @@ from django.utils import timezone
 from .event_manager import EventManager
 from datetime import datetime, timedelta
 from .notification_manager import send_mail
-from PyPDF2 import PdfFileMerger
-merger = PdfFileMerger()
+import subprocess
 
 events = [
     ('ON_ESSAY_UPLOAD', 'Upload de Redação'),
@@ -67,7 +66,8 @@ class Student(models.Model):
         return self.name
 
 def essays_upload_to(essay, a):
-    return 'uploads/essays/{}-{}-{}.pdf'.format(essay.student.name, essay.student.school.name, essay.upload_date)
+    file_format = a[-3:]
+    return 'uploads/essays/{}-{}-{}.{}'.format(essay.student.name, essay.student.school.name, essay.upload_date, file_format)
 
 def redactions_upload_to(redaction, a):
     return 'uploads/redactions/[CORRECAO]-{}-{}-{}.pdf'.format(redaction.essay.student.name, redaction.essay.student.school.name, redaction.essay.upload_date)
@@ -91,7 +91,7 @@ class Essay(models.Model):
     triage_done = models.BooleanField(editable=False, default=False)
 
     class Meta:
-        ordering = ('last_modified', 'has_essay', '-has_correction')
+        ordering = ('upload_date', 'has_essay', '-has_correction')
         verbose_name = 'redação'
         verbose_name_plural = 'redações'
 
@@ -108,25 +108,24 @@ class Essay(models.Model):
         
         self.save()
     
-    def do_triage(self):
-        if self.file:
-            self.triage_done = True
-            merger = PdfFileMerger()
-            merger.append(self.file)
-            merger.append('essay/inputs/MODEL.pdf')
-            merger.write(str(self.file).replace('.pdf', '_.pdf'))
-            merger.close()
-            self.file = str(self.file).replace('.pdf', '_.pdf')
-
     def save(self, *args, **kwargs):
-        if not self.triage_done:
-            super().save(*args, **kwargs)
-            self.do_triage()
-
         self.last_modified = timezone.now()
         if not self.id:
             self.upload_date = self.last_modified
             self.delivery_date = self.last_modified + timedelta(days=self.student.school.days_to_redact)
+        if not self.triage_done:
+            self.triage_done = True
+            super().save(*args, **kwargs)
+            file_dir = str(self.file)
+            print('FILE:', file_dir)
+            if '.png' in file_dir.lower() or '.jpg' in file_dir.lower():
+                subprocess.call(['convert', file_dir, file_dir[:-3] + '.pdf'])
+                file_dir = file_dir[:-3] + '.pdf'
+
+            output = file_dir.replace('.pdf', '_.pdf')
+            subprocess.call(['pdftk', file_dir, 'essay/inputs/MODEL.pdf', 'cat',  'output', output])
+            self.file = output
+
         if not self.has_essay:
             self.has_essay = True
             EventManager.dispatch_event('ON_ESSAY_UPLOAD', self)

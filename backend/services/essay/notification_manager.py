@@ -7,7 +7,7 @@ import codecs
 from threading import _start_new_thread
 
 def send_mail(email, subject, message, attachment):
-    try:
+    def _send_mail(mail, subject, message, attachment):
         msg = MIMEMultipart()
         password = 'campusppa'
         msg['To'] = email
@@ -26,6 +26,8 @@ def send_mail(email, subject, message, attachment):
             server.starttls()
             server.login(msg['From'], password)
             server.sendmail(msg['From'], msg['To'], msg.as_string())
+    try:
+        _start_new_thread(target=_send_mail, args=(mail, subject, message, attachment))
         return True
     except Exception as e:
         print('exception @send_mail ->', e)
