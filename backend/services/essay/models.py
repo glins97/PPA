@@ -75,7 +75,7 @@ def redactions_upload_to(redaction, a):
 class Essay(models.Model):
     student = models.ForeignKey(Student, verbose_name='Aluno', on_delete=models.CASCADE)
     upload_date = models.DateField(verbose_name='data de submissão', blank=True, null=True)
-    last_modified = models.DateField(verbose_name='última modificação', blank=True, null=True)
+    last_modified = models.DateTimeField(verbose_name='última modificação', blank=True, null=True)
     delivery_date = models.DateField(verbose_name='data de entrega', blank=True, null=True)
     redactions = models.ManyToManyField('Redaction', related_name='redactions', verbose_name='correções', null=True, blank=True)
     last_redaction = models.ForeignKey('Redaction', related_name='last_redaction', editable=False, on_delete=models.CASCADE, blank=True, null=True)
@@ -91,7 +91,7 @@ class Essay(models.Model):
     triage_done = models.BooleanField(editable=False, default=False)
 
     class Meta:
-        ordering = ('upload_date', 'has_essay', '-has_correction')
+        ordering = ('upload_date', 'last_modified', 'has_essay', '-has_correction')
         verbose_name = 'redação'
         verbose_name_plural = 'redações'
 
@@ -118,7 +118,7 @@ class Essay(models.Model):
             super().save(*args, **kwargs)
             file_dir = str(self.file)
             print('FILE:', file_dir)
-            if '.png' in file_dir.lower() or '.jpg' in file_dir.lower():
+            if '.png' in file_dir.lower() or '.jpg' in file_dir.lower() or '.peg' in file_dir.lower():
                 subprocess.call(['convert', file_dir, file_dir[:-4] + '.pdf'])
                 file_dir = file_dir[:-4] + '.pdf'
 

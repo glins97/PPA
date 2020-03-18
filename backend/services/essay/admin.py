@@ -21,7 +21,7 @@ class EssayAdmin(admin.ModelAdmin):
         }),
     )
     autocomplete_fields = ('student', 'monitor_1', 'monitor_2')
-    list_display = ('student', 'last_modified', 'has_correction', 'monitor_1', 'monitor_2', 'final_grade', 'arquivo', 'sent', 'ação')
+    list_display = ('student', 'upload_date', 'last_modified', 'has_correction', 'monitor_1', 'monitor_2', 'final_grade', 'arquivo', 'sent', 'ação')
     list_filter = ('last_modified', 'has_correction', 'final_grade', 'sent', 'monitor_1', 'monitor_2')
     search_fields = ('student', )
     readonly_fields = ('sent', 'redactions', 'upload_date', 'delivery_date', 'last_modified', 'final_grade')
