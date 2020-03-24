@@ -70,8 +70,8 @@ class EssayAdmin(admin.ModelAdmin):
 
 class StudentAdmin(admin.ModelAdmin):
     list_display = ('name', 'school', 'email', 'year', 'class_id', 'number_of_essays', 'average_grade')
-    list_filter = ('school', 'year', 'number_of_essays', 'class_id')
-    search_fields = ('name', 'school')
+    list_filter = ('school', 'number_of_essays', 'class_id')
+    search_fields = ('name',)
     readonly_fields = ('number_of_essays', 'average_grade')
 
 class SchoolAdmin(admin.ModelAdmin):
