@@ -197,7 +197,7 @@ ppa = School.objects.get(name='PPA')
 for student_name in ppa_med_bsb:
     if len(Student.objects.all().filter(name=student_name.upper())): continue
     Student(
-        school=juazeiro,
+        school=ppa,
         name=student_name.upper(),
         email='',
         identification='',
@@ -207,7 +207,7 @@ for student_name in ppa_med_bsb:
 for student_name in ppa_pre_bsb:
     if len(Student.objects.all().filter(name=student_name.upper())): continue
     Student(
-        school=juazeiro,
+        school=ppa,
         name=student_name.upper(),
         email='',
         identification='',
