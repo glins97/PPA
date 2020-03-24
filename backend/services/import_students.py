@@ -217,7 +217,7 @@ for student_name in ppa_pre_bsb:
 for student_name in ppa_pre_med_bsb:
     if len(Student.objects.all().filter(name=student_name.upper())): continue
     Student(
-        school=juazeiro,
+        school=ppa,
         name=student_name.upper(),
         email='',
         identification='',
