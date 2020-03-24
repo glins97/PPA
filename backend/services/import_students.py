@@ -170,7 +170,7 @@ ppa_pre_med_bsb = [
     'MARIANA MELLO MENEZES ', 
 
 ]
-juazeiro = School.objects.get(name='Juazeiro')
+juazeiro = School.objects.get(name='PPA Evolução')
 for student_name in juazeiro_ppa_students:
     if len(Student.objects.all().filter(name=student_name)): continue
     Student(
