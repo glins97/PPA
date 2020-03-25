@@ -2,7 +2,11 @@ from .notification_manager import send_mail
 def on_essay_upload(*args, **kwargs):
     from .models import NotificationConfiguration
     essay = args[0]
-    fn = str(essay.file)
+    fn = ''
+    try:
+        fn = str(essay.file)
+    except:
+        pass
     if 'file' in kwargs:
         fn = str(kwargs['file'])
     if not fn: return
@@ -12,7 +16,11 @@ def on_essay_upload(*args, **kwargs):
 def on_monitor_assignment(*args, **kwargs):    
     from .models import NotificationConfiguration
     essay = args[0]
-    fn = str(essay.file)
+    fn = ''
+    try:
+        fn = str(essay.file)
+    except:
+        pass
     if 'file' in kwargs:
         fn = str(kwargs['file'])
     if not fn: return
@@ -22,7 +30,11 @@ def on_monitor_assignment(*args, **kwargs):
 def on_single_correction_done(*args, **kwargs):
     from .models import NotificationConfiguration
     essay = args[0]
-    fn = str(essay.file)
+    fn = ''
+    try:
+        fn = str(essay.file)
+    except:
+        pass
     if 'file' in kwargs:
         fn = str(kwargs['file'])
     if not fn: return
@@ -32,7 +44,11 @@ def on_single_correction_done(*args, **kwargs):
 def on_all_corrections_done(*args, **kwargs):
     from .models import NotificationConfiguration
     essay = args[0]
-    fn = str(essay.file)
+    fn = ''
+    try:
+        fn = str(essay.file)
+    except:
+        pass
     if 'file' in kwargs:
         fn = str(kwargs['file'])
     if not fn: return
@@ -42,7 +58,11 @@ def on_all_corrections_done(*args, **kwargs):
 def on_delivery_date_arrived(*args, **kwargs):
     from .models import NotificationConfiguration
     essay = args[0]
-    fn = str(essay.file)
+    fn = ''
+    try:
+        fn = str(essay.file)
+    except:
+        pass
     if 'file' in kwargs:
         fn = str(kwargs['file'])
     if not fn: return

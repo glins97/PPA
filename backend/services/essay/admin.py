@@ -21,11 +21,30 @@ class EssayAdmin(admin.ModelAdmin):
         }),
     )
     autocomplete_fields = ('student', 'monitor_1', 'monitor_2')
-    list_display = ('student', 'upload_date', 'last_modified', 'has_correction', 'monitor_1', 'monitor_2', 'final_grade', 'arquivo', 'sent', 'ação')
-    list_filter = ('last_modified', 'has_correction', 'final_grade', 'sent', 'monitor_1', 'monitor_2')
-    search_fields = ('student', )
-    readonly_fields = ('sent', 'redactions', 'upload_date', 'delivery_date', 'last_modified', 'final_grade')
+    list_display = ('student', 'status', 'correção_1', 'correção_2', 'final_grade', 'arquivo', 'ação')
+    list_filter = ('student__school', 'student__class_id', 'status', 'upload_date', 'final_grade', 'sent')
+    search_fields = ('student__name', )
+    readonly_fields = ('status', 'redactions', 'upload_date', 'delivery_date', 'last_modified', 'final_grade')
     list_per_page = 20
+
+    def correção_1(self, essay):
+        redactions = essay.redactions.all()
+        if len(redactions) > 0:
+            return redactions[0].grades_average
+        else:
+            if essay.status == 'CORRIGINDO':
+                return 'EM ANDAMENTO'
+        return '-'
+
+    def correção_2(self, essay):
+        redactions = essay.redactions.all()
+        if len(redactions) > 1:
+            return redactions[1].grades_average
+        else:
+            if len(redactions) > 0:
+                if essay.status == 'CORRIGINDO':
+                    return 'EM ANDAMENTO'
+        return '-'
 
     def get_urls(self):
         urls = super().get_urls()
@@ -34,6 +53,7 @@ class EssayAdmin(admin.ModelAdmin):
             re_path(r'.+(?P<dir>uploads/redactions/)(?P<fn>.+)/$', self.download),
             re_path(r'.+(uploads/latest/)(?P<pk>.+)/$', self.latest),
             re_path(r'send/(?P<id>.+)/$', self.send),
+            re_path(r'change_status/(?P<id>.+)/(?P<status>.+)/$', self.change_status),
         ]
         return my_urls + urls
 
@@ -44,10 +64,20 @@ class EssayAdmin(admin.ModelAdmin):
         return HttpResponseRedirect('../../../{url}'.format(url=Essay.objects.get(pk=pk).file.name))
 
     def arquivo(self, request):
-        return format_html('<a href="view/uploads/latest/{pk}">Download</a>&nbsp'.format(pk=request.pk))
+        return format_html('<a href="view/uploads/latest/{pk}">DOWNLOAD</a>&nbsp'.format(pk=request.pk))
     
+    def change_status(self, request, id, status):
+        try:            
+            obj = Essay.objects.get(pk=id)
+            obj.status = status
+            obj.save()
+            self.message_user(request, "Status atualizado!")
+        except Exception as e:
+            print(e)
+            self.message_user(request, "Falha ao atualizar status, consulte o Administrador!", level=messages.ERROR)
+        return HttpResponseRedirect(r'../../../')
+
     def send(self, request, id):
-        # TODO: JOIN PDFS, SEND IT
         try:            
             obj = Essay.objects.get(pk=id)
             sent = send_mail(obj.student.email, 'Redação corrigida!', '', str(obj.last_redaction.file))
@@ -63,15 +93,21 @@ class EssayAdmin(admin.ModelAdmin):
         return HttpResponseRedirect(r'../../')
 
     def ação(self, request):
-        if request.student.school.send_mode_target == 'MODE_STUDENT' and request.has_correction:
-            return format_html(
-                '<a class="button" href="send/{}">ENVIAR CORREÇÃO</a>&nbsp'.format(request.pk))
-        return format_html('')
+        html = format_html('')
+        # if request.student.school.send_mode_target == 'MODE_STUDENT' and request.has_correction and not request.sent:
+        #     html += format_html(
+        #         '<a class="button" href="send/{}">ENVIAR CORREÇÃO</a>&nbsp'.format(request.pk))
+        
+        if request.status == 'AGUARDANDO CORREÇÃO':
+            html += format_html(
+                '<a class="button" href="change_status/{}/{}">INICIAR CORREÇÃO</a>&nbsp'.format(request.pk, 'CORRIGINDO'))
+        
+        return html
 
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ('name', 'school', 'email', 'year', 'class_id', 'number_of_essays', 'average_grade')
-    list_filter = ('school', 'number_of_essays', 'class_id')
-    search_fields = ('name',)
+    list_display = ('name', 'school', 'class_id', 'number_of_essays', 'average_grade')
+    list_filter = ('school', 'class_id', 'number_of_essays')
+    search_fields = ('name', 'school__name', 'class_id')
     readonly_fields = ('number_of_essays', 'average_grade')
 
 class SchoolAdmin(admin.ModelAdmin):
@@ -132,9 +168,20 @@ class RedactionAdmin(admin.ModelAdmin):
         })
     )
     autocomplete_fields = ('essay', 'monitor')
+    search_fields = ('essay__student__name',)
+    list_display = ('essay', 'date', 'campus', 'turma', 'monitor', 'grades_average')
+    list_filter = ('essay__student__school', 'essay__student__class_id', 'monitor', 'grades_average')
+    readonly_fields = ('grade_1', 'grade_2', 'grade_3', 'grade_4', 'grade_5')
 
-    list_display = ('essay', 'monitor', 'date', 'grades_average')
-    list_filter = ('monitor', 'grades_average')
+    def campus(self, redaction):
+        if redaction and redaction.essay and redaction.essay.student and redaction.essay.student.school:
+            return redaction.essay.student.school.name
+        return ''
+
+    def turma(self, redaction):
+        if redaction and redaction.essay and redaction.essay.student and redaction.essay.student:
+            return redaction.essay.student.class_id
+        return ''
 
     def get_urls(self):
         urls = super().get_urls()

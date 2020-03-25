@@ -5,6 +5,7 @@ from .event_manager import EventManager
 from datetime import datetime, timedelta
 from .notification_manager import send_mail
 import subprocess
+import PyPDF2
 
 events = [
     ('ON_ESSAY_UPLOAD', 'Upload de Redação'),
@@ -46,7 +47,7 @@ class School(models.Model):
         return self.name
 
 class Student(models.Model):
-    school = models.ForeignKey(School, verbose_name='school', on_delete=models.CASCADE)
+    school = models.ForeignKey(School, verbose_name='campus', on_delete=models.CASCADE)
     name = models.CharField(verbose_name='nome', max_length=256)
     email = models.CharField(verbose_name='email', max_length=256)
     identification = models.CharField(verbose_name='matrícula', max_length=32)
@@ -74,21 +75,27 @@ def redactions_upload_to(redaction, a):
 
 class Essay(models.Model):
     student = models.ForeignKey(Student, verbose_name='Aluno', on_delete=models.CASCADE)
+    
+    file = models.FileField(verbose_name='redação', upload_to=essays_upload_to, null=True, blank=True)
+    redactions = models.ManyToManyField('Redaction', related_name='redactions', verbose_name='correções', null=True, blank=True)
+    last_redaction = models.ForeignKey('Redaction', related_name='last_redaction', editable=False, on_delete=models.CASCADE, blank=True, null=True)
+    status = models.CharField(editable=False, max_length=255, default='AGUARDANDO CORREÇÃO')
+    
     upload_date = models.DateField(verbose_name='data de submissão', blank=True, null=True)
     last_modified = models.DateTimeField(verbose_name='última modificação', blank=True, null=True)
     delivery_date = models.DateField(verbose_name='data de entrega', blank=True, null=True)
-    redactions = models.ManyToManyField('Redaction', related_name='redactions', verbose_name='correções', null=True, blank=True)
-    last_redaction = models.ForeignKey('Redaction', related_name='last_redaction', editable=False, on_delete=models.CASCADE, blank=True, null=True)
-    file = models.FileField(verbose_name='redação', upload_to=essays_upload_to, null=True, blank=True)
-    final_grade = models.IntegerField(verbose_name='nota final', default=0)
-    has_essay = models.BooleanField(editable=False, default=False, verbose_name='possui redação')
-    sent = models.BooleanField(default=False, verbose_name='enviado')
+        
     monitor_1 = models.ForeignKey(User, related_name='monitor_1', on_delete=models.CASCADE, blank=True, null=True)
     monitor_2 = models.ForeignKey(User, related_name='monitor_2', on_delete=models.CASCADE, blank=True, null=True)
+    final_grade = models.IntegerField(verbose_name='nota final', default=0)
+    
+    has_essay = models.BooleanField(editable=False, default=False, verbose_name='possui redação')
     has_correction = models.BooleanField(default=False, verbose_name='correção finalizada')
+    sent = models.BooleanField(default=False, verbose_name='enviado')
+    max_redactions = models.IntegerField(editable=False, default=2)
     has_monitor_1 = models.BooleanField(editable=False, default=False)
     has_monitor_2 = models.BooleanField(editable=False, default=False)
-    triage_done = models.BooleanField(editable=False, default=False)
+    previous_file = models.FileField(null=True, blank=True)
 
     class Meta:
         ordering = ('upload_date', 'last_modified', 'has_essay', '-has_correction')
@@ -96,15 +103,18 @@ class Essay(models.Model):
         verbose_name_plural = 'redações'
 
     def add_redaction(self, redaction):
-        self.file = redaction.file
+        if redaction.file:
+            self.file = redaction.file
+            self.previous_file = redaction.file # prevent triage from triggering
         self.redactions.add(redaction)
         self.last_redaction = redaction
         self.final_grade = 0
+        self.status = 'AGUARDANDO CORREÇÃO'
         for redaction in self.redactions.all():
             self.final_grade += redaction.grades_average
         self.final_grade = self.final_grade / len(self.redactions.all())
         
-        if len(self.redactions.all()) >= MAX_REDACTIONS:
+        if len(self.redactions.all()) >= self.max_redactions:
             self.has_correction = True
         
         self.save()
@@ -114,9 +124,13 @@ class Essay(models.Model):
         if not self.id:
             self.upload_date = self.last_modified
             self.delivery_date = self.last_modified + timedelta(days=self.student.school.days_to_redact)
-        if not self.triage_done:
-            self.triage_done = True
-            super().save(*args, **kwargs)
+        if self.has_correction:
+            self.status = 'CORREÇÃO FINALIZADA'
+        
+        super().save(*args, **kwargs)
+
+        # if new file is manually added, then append correction page
+        if str(self.previous_file) != str(self.file):
             file_dir = str(self.file)
             print('FILE:', file_dir)
             if '.png' in file_dir.lower() or '.jpg' in file_dir.lower() or '.peg' in file_dir.lower():
@@ -126,6 +140,7 @@ class Essay(models.Model):
             output = file_dir.replace('.pdf', '_.pdf')
             subprocess.call(['pdftk', file_dir, 'essay/inputs/MODEL.pdf', 'cat',  'output', output])
             self.file = output
+        self.previous_file = self.file
 
         if not self.has_essay:
             self.has_essay = True
@@ -154,7 +169,7 @@ class Essay(models.Model):
         return str(self.student)
 
 class Redaction(models.Model):
-    essay = models.ForeignKey(Essay, on_delete=models.CASCADE)
+    essay = models.ForeignKey(Essay, verbose_name='aluno', on_delete=models.CASCADE)
     monitor = models.ForeignKey(User, on_delete=models.CASCADE)
     grade_1 = models.IntegerField(verbose_name='competência 1', default=0)
     grade_2 = models.IntegerField(verbose_name='competência 2', default=0)
@@ -163,7 +178,7 @@ class Redaction(models.Model):
     grade_5 = models.IntegerField(verbose_name='competência 5', default=0)
     grades_average = models.IntegerField(verbose_name='nota', default=0, editable=False)
     date = models.DateTimeField(verbose_name='data de correção', blank=True, null=True, editable=False)
-    file = models.FileField(verbose_name='correção', upload_to=redactions_upload_to)
+    file = models.FileField(verbose_name='correção', upload_to=redactions_upload_to, blank=True, null=True)
 
     class Meta:
         verbose_name = 'correção'
@@ -172,13 +187,57 @@ class Redaction(models.Model):
     def save(self, *args, **kwargs):
         self.essay.last_modified = timezone.now()
         self.date = timezone.now()
+        super().save(*args, **kwargs) 
+        if self.file:
+            ff = None
+            try:
+                f = PyPDF2.PdfFileReader(self.file)
+                ff = f.getFields()
+                if ff: 
+                    if ff['a1']['/V'] and not ff['b1']['/V']:
+                        self.grade_1 = int(ff['a1']['/V'])
+                    elif ff['a1']['/V'] and  ff['b1']['/V']:
+                        self.grade_1 = int(ff['b1']['/V'])
+                    else:
+                        self.grade_1 = 0
+
+                    if ff['a2']['/V'] and not ff['b2']['/V']:
+                        self.grade_2 = int(ff['a2']['/V'])
+                    elif ff['a2']['/V'] and  ff['b2']['/V']:
+                        self.grade_2 = int(ff['b2']['/V'])
+                    else:
+                        self.grade_2 = 0
+
+                    if ff['a3']['/V'] and not ff['b3']['/V']:
+                        self.grade_3 = int(ff['a3']['/V'])
+                    elif ff['a3']['/V'] and  ff['b3']['/V']:
+                        self.grade_3 = int(ff['b3']['/V'])
+                    else:
+                        self.grade_3 = 0
+
+                    if ff['a4']['/V'] and not ff['b4']['/V']:
+                        self.grade_4 = int(ff['a4']['/V'])
+                    elif ff['a4']['/V'] and  ff['b4']['/V']:
+                        self.grade_4 = int(ff['b4']['/V'])
+                    else:
+                        self.grade_4 = 0
+
+                    if ff['a5']['/V'] and not ff['b5']['/V']:
+                        self.grade_5 = int(ff['a5']['/V'])
+                    elif ff['a5']['/V'] and  ff['b5']['/V']:
+                        self.grade_5 = int(ff['b5']['/V'])
+                    else:
+                        self.grade_5 = 0
+            except:
+                self.message_user(request, "Falha ao ler PDF, por favor contate o Administrador!", level=messages.ERROR)
+            
         self.grades_average = 0
         self.grades_average += self.grade_1
         self.grades_average += self.grade_2
         self.grades_average += self.grade_3
         self.grades_average += self.grade_4
         self.grades_average += self.grade_5
-        super().save(*args, **kwargs)         
+        super().save(*args, **kwargs) 
         EventManager.dispatch_event('ON_SINGLE_CORRECTION_DONE', self.essay, file=self.file)
         self.essay.add_redaction(self)
 
