@@ -98,7 +98,7 @@ class Essay(models.Model):
     previous_file = models.FileField(null=True, blank=True)
 
     class Meta:
-        ordering = ('upload_date', 'last_modified', 'has_essay', '-has_correction')
+        ordering = ('upload_date', 'last_modified', 'has_essay', '-has_correction', 'student__name')
         verbose_name = 'redação'
         verbose_name_plural = 'redações'
 
@@ -181,6 +181,7 @@ class Redaction(models.Model):
     file = models.FileField(verbose_name='correção', upload_to=redactions_upload_to, blank=True, null=True)
 
     class Meta:
+        ordering = ('essay__student__name',)
         verbose_name = 'correção'
         verbose_name_plural = 'correções'
 

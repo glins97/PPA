@@ -25,7 +25,7 @@ class EssayAdmin(admin.ModelAdmin):
     list_filter = ('student__school', 'student__class_id', 'status', 'upload_date', 'final_grade', 'sent')
     search_fields = ('student__name', )
     readonly_fields = ('status', 'redactions', 'upload_date', 'delivery_date', 'last_modified', 'final_grade')
-    list_per_page = 20
+    list_per_page = 100
 
     def correção_1(self, essay):
         redactions = essay.redactions.all()
@@ -172,6 +172,7 @@ class RedactionAdmin(admin.ModelAdmin):
     list_display = ('essay', 'date', 'campus', 'turma', 'monitor', 'grades_average')
     list_filter = ('essay__student__school', 'essay__student__class_id', 'monitor', 'grades_average')
     readonly_fields = ('grade_1', 'grade_2', 'grade_3', 'grade_4', 'grade_5')
+    list_per_page = 100
 
     def campus(self, redaction):
         if redaction and redaction.essay and redaction.essay.student and redaction.essay.student.school:
