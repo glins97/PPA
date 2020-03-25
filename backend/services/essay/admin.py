@@ -96,7 +96,7 @@ class EssayAdmin(admin.ModelAdmin):
         html = format_html('')
         if request.student.school.send_mode_target == 'MODE_STUDENT' and request.has_correction and not request.sent:
             html += format_html(
-                '<a class="button" href="send/{}">ENVIAR CORREÇÃO</a>&nbsp'.format(request.pk))
+                '<a class="button" href="send/{}" style:"background-color:#ff6960">ENVIAR CORREÇÃO</a>&nbsp'.format(request.pk))
         
         if request.status == 'AGUARDANDO CORREÇÃO':
             html += format_html(
