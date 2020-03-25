@@ -171,7 +171,7 @@ class RedactionAdmin(admin.ModelAdmin):
     search_fields = ('essay__student__name',)
     list_display = ('essay', 'date', 'campus', 'turma', 'monitor', 'grades_average')
     list_filter = ('essay__student__school', 'essay__student__class_id', 'monitor', 'grades_average')
-    readonly_fields = ('grade_1', 'grade_2', 'grade_3', 'grade_4', 'grade_5')
+    # readonly_fields = ('grade_1', 'grade_2', 'grade_3', 'grade_4', 'grade_5')
     list_per_page = 100
 
     def campus(self, redaction):

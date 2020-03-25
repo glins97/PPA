@@ -188,6 +188,7 @@ class Redaction(models.Model):
     def save(self, *args, **kwargs):
         self.essay.last_modified = timezone.now()
         self.date = timezone.now()
+        g1, g2, g3, g4, g5 = 0, 0, 0, 0, 0
         super().save(*args, **kwargs) 
         if self.file:
             ff = None
@@ -196,48 +197,50 @@ class Redaction(models.Model):
                 ff = f.getFields()
                 if ff: 
                     if ff['a1']['/V'] and not ff['b1']['/V']:
-                        self.grade_1 = int(ff['a1']['/V'])
+                        g1 = int(ff['a1']['/V'])
                     elif ff['a1']['/V'] and  ff['b1']['/V']:
-                        self.grade_1 = int(ff['b1']['/V'])
+                        g1 = int(ff['b1']['/V'])
                     else:
-                        self.grade_1 = 0
+                        g1 = 0
 
                     if ff['a2']['/V'] and not ff['b2']['/V']:
-                        self.grade_2 = int(ff['a2']['/V'])
+                        g2 = int(ff['a2']['/V'])
                     elif ff['a2']['/V'] and  ff['b2']['/V']:
-                        self.grade_2 = int(ff['b2']['/V'])
+                        g2 = int(ff['b2']['/V'])
                     else:
-                        self.grade_2 = 0
+                        g2 = 0
 
                     if ff['a3']['/V'] and not ff['b3']['/V']:
-                        self.grade_3 = int(ff['a3']['/V'])
+                        g3 = int(ff['a3']['/V'])
                     elif ff['a3']['/V'] and  ff['b3']['/V']:
-                        self.grade_3 = int(ff['b3']['/V'])
+                        g3 = int(ff['b3']['/V'])
                     else:
-                        self.grade_3 = 0
+                        g3 = 0
 
                     if ff['a4']['/V'] and not ff['b4']['/V']:
-                        self.grade_4 = int(ff['a4']['/V'])
+                        g4 = int(ff['a4']['/V'])
                     elif ff['a4']['/V'] and  ff['b4']['/V']:
-                        self.grade_4 = int(ff['b4']['/V'])
+                        g4 = int(ff['b4']['/V'])
                     else:
-                        self.grade_4 = 0
+                        g4 = 0
 
                     if ff['a5']['/V'] and not ff['b5']['/V']:
-                        self.grade_5 = int(ff['a5']['/V'])
+                        g5 = int(ff['a5']['/V'])
                     elif ff['a5']['/V'] and  ff['b5']['/V']:
-                        self.grade_5 = int(ff['b5']['/V'])
+                        g5 = int(ff['b5']['/V'])
                     else:
-                        self.grade_5 = 0
+                        g5 = 0
             except:
-                self.message_user(request, "Falha ao ler PDF, por favor contate o Administrador!", level=messages.ERROR)
+                pass
+                # print()
+                # self.message_user(request, "Falha ao ler PDF, por favor contate o Administrador!", level=messages.ERROR)
             
         self.grades_average = 0
-        self.grades_average += self.grade_1
-        self.grades_average += self.grade_2
-        self.grades_average += self.grade_3
-        self.grades_average += self.grade_4
-        self.grades_average += self.grade_5
+        self.grades_average += max([self.grade_1, g1])
+        self.grades_average += max([self.grade_2, g2])
+        self.grades_average += max([self.grade_3, g3])
+        self.grades_average += max([self.grade_4, g4])
+        self.grades_average += max([self.grade_5, g5])
         super().save(*args, **kwargs) 
         EventManager.dispatch_event('ON_SINGLE_CORRECTION_DONE', self.essay, file=self.file)
         self.essay.add_redaction(self)
