@@ -124,7 +124,7 @@ class EssayAdmin(admin.ModelAdmin):
         return queryset, use_distinct
     
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ('name', 'school', 'class_id', 'number_of_essays', 'average_grade')
+    list_display = ('name', 'school', 'class_id', 'email', 'number_of_essays', 'average_grade')
     list_filter = ('school', 'class_id', 'number_of_essays')
     search_fields = ('name', 'school__name', 'class_id')
     readonly_fields = ('number_of_essays', 'average_grade')
