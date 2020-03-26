@@ -21,12 +21,18 @@ class EssayAdmin(admin.ModelAdmin):
         }),
     )
     autocomplete_fields = ('student', 'monitor_1', 'monitor_2')
-    list_display = ('student', 'status', 'correção_1', 'correção_2', 'final_grade', 'arquivo', 'ação')
     list_filter = ('student__school', 'student__class_id', 'status', 'upload_date', 'final_grade', 'sent')
     search_fields = ('student__name', )
     readonly_fields = ('status', 'redactions', 'upload_date', 'delivery_date', 'last_modified', 'final_grade')
     list_per_page = 100
 
+    def changelist_view(self, request, extra_context=None):
+         if request.user.is_superuser:
+             self.list_display = ('student', 'status', 'correção_1', 'correção_2', 'final_grade', 'arquivo', 'ação', 'email')
+         else:
+             self.list_display = ('student', 'status', 'correção_1', 'correção_2', 'final_grade', 'arquivo', 'ação')
+         return super(EssayAdmin, self).changelist_view(request, extra_context)
+    
     def correção_1(self, essay):
         redactions = essay.redactions.all()
         if len(redactions) > 0:
@@ -94,16 +100,29 @@ class EssayAdmin(admin.ModelAdmin):
 
     def ação(self, request):
         html = format_html('')
-        if request.student.school.send_mode_target == 'MODE_STUDENT' and request.has_correction and not request.sent:
-            html += format_html(
-                '<a class="button" href="send/{}" style:"background-color:#ff6960">ENVIAR CORREÇÃO</a>&nbsp'.format(request.pk))
-        
         if request.status == 'AGUARDANDO CORREÇÃO':
             html += format_html(
                 '<a class="button" href="change_status/{}/{}">INICIAR CORREÇÃO</a>&nbsp'.format(request.pk, 'CORRIGINDO'))
         
         return html
 
+    def email(self, request):
+        html = format_html('')
+        if request.student.school.send_mode_target == 'MODE_STUDENT' and request.has_correction and not request.sent:
+            if request.student.email:
+                html += format_html(
+                    '<a class="button" href="send/{}" style="background-color:#ff6960">ENVIAR CORREÇÃO</a>&nbsp'.format(request.pk))
+            else:
+                html += format_html(
+                    '<a style="color:#ff6960">SEM EMAIL CADASTRADO</a>&nbsp')
+        return html
+
+    def get_search_results(self, request, queryset, search_term):
+        queryset, use_distinct = super().get_search_results(request, queryset, search_term)
+        if request.path == '/admin/essay/essay/autocomplete/':
+            queryset = queryset.exclude(sent=True).exclude(has_correction=True)
+        return queryset, use_distinct
+    
 class StudentAdmin(admin.ModelAdmin):
     list_display = ('name', 'school', 'class_id', 'number_of_essays', 'average_grade')
     list_filter = ('school', 'class_id', 'number_of_essays')
