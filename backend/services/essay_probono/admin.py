@@ -139,7 +139,7 @@ class RedactionAdmin(admin.ModelAdmin):
     search_fields = ('essay__student__name',)
     list_display = ('essay', 'date', 'monitor', 'grades_average')
     list_filter = ('monitor', 'grades_average')
-    # readonly_fields = ('grade_1', 'grade_2', 'grade_3', 'grade_4', 'grade_5')
+    readonly_fields = ('grade_1', 'grade_2', 'grade_3', 'grade_4', 'grade_5')
     list_per_page = 100
 
     def get_urls(self):

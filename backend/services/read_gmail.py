@@ -67,7 +67,7 @@ def main():
     service = build('gmail', 'v1', credentials=creds)
     results = service.users().messages().list(userId='me', labelIds=['INBOX']).execute()
     messages = results.get('messages', [])
-    already_added = []
+    already_added = [ essay.mail_id for essay in Essay.objects.all() ]
     for message in messages:
         msg = service.users().messages().get(userId='me', id=message['id']).execute()
         subject_ = ''
@@ -83,12 +83,14 @@ def main():
                 from_name = from_name.strip().upper()
                 from_email = from_email.replace('>', '')
             if header['name'] == 'Subject':
-                subject_ = header['value']
-        student = get_bd_obj(Student, name=from_name, email=from_email)
-        attachment = get_attachments(service, message_id, student)
-        print(student, attachment)
-        if attachment:
-            essay = get_bd_obj(Essay, mail_id=message_id, student=student, file=attachment)
+                subject_ = header['value'].lower()
+        
+        if "redacao" in subject_ or 'redação' in subject_ or 'redaçao' in subject_:
+            student = get_bd_obj(Student, name=from_name, email=from_email)
+            attachment = get_attachments(service, message_id, student)
+            print(student)
+            if attachment:
+                essay = get_bd_obj(Essay, mail_id=message_id, student=student, file=attachment)
 
 
 if __name__ == '__main__':
