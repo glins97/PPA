@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'tps',
     'essay.apps.EssayConfig',
+    'essay_probono.apps.EssayProbonoConfig',
 ]
 
 MIDDLEWARE = [
