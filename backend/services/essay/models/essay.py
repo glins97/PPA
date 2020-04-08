@@ -17,6 +17,7 @@ class Essay(models.Model):
     redactions = models.ManyToManyField('Redaction', related_name='redactions', verbose_name='correções', null=True, blank=True)
     last_redaction = models.ForeignKey('Redaction', related_name='last_redaction', editable=False, on_delete=models.CASCADE, blank=True, null=True)
     status = models.CharField(editable=False, max_length=255, default='AGUARDANDO CORREÇÃO')
+    theme = models.CharField(verbose_name='Tema', max_length=255, null=True, blank=True)
     
     upload_date = models.DateField(verbose_name='data de submissão', blank=True, null=True)
     last_modified = models.DateTimeField(verbose_name='última modificação', blank=True, null=True)
@@ -103,4 +104,4 @@ class Essay(models.Model):
         return self.__str__()
 
     def __str__(self):
-        return str(self.student)
+        return '{} - {}'.format(self.student, self.theme if self.theme else self.pk)

@@ -27,8 +27,9 @@ class Redaction(models.Model):
     def save(self, *args, **kwargs):
         self.essay.last_modified = timezone.now()
         self.date = timezone.now()
-        g1, g2, g3, g4, g5 = 0, 0, 0, 0, 0
         super().save(*args, **kwargs) 
+        
+        g1, g2, g3, g4, g5 = 0, 0, 0, 0, 0
         if self.file:
             ff = None
             try:
@@ -70,20 +71,20 @@ class Redaction(models.Model):
                     else:
                         g5 = 0
             except:
-                pass
-                # print()
-                # self.message_user(request, "Falha ao ler PDF, por favor contate o Administrador!", level=messages.ERROR)
+                self.message_user("Falha ao ler PDF, por favor contate o Administrador!", level=messages.ERROR)
             
         self.grades_average = 0
-        self.grades_average += max([self.grade_1, g1])
-        self.grades_average += max([self.grade_2, g2])
-        self.grades_average += max([self.grade_3, g3])
-        self.grades_average += max([self.grade_4, g4])
-        self.grades_average += max([self.grade_5, g5])
+        self.grade_1 = max([self.grade_1, g1])
+        self.grade_2 = max([self.grade_2, g2])
+        self.grade_3 = max([self.grade_3, g3])
+        self.grade_4 = max([self.grade_4, g4])
+        self.grade_5 = max([self.grade_5, g5])
+        for grade in [self.grade_1, self.grade_2, self.grade_3, self.grade_4, self.grade_5]:
+            self.grades_average += grade
         super().save(*args, **kwargs) 
+
         EventManager.dispatch_event('ON_SINGLE_CORRECTION_DONE', self.essay, file=self.file)
         self.essay.add_redaction(self)
-
 
     def __repr__(self):
         return self.__str__()

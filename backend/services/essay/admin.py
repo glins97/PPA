@@ -1,13 +1,14 @@
-from django.contrib import admin
+from django import forms
+from django.contrib import admin, messages
 from django.urls import include, path, re_path
 from django.http import HttpResponse, HttpResponseRedirect, Http404, FileResponse
-from .models import School, Student, Essay, Redaction, NotificationConfiguration
 from django.utils.html import format_html
-from .notification_manager import send_mail
-from django.contrib import messages
-from zipfile import ZipFile
-from django import forms
+from django.contrib.messages import constants as messages
 
+from .models import School, Student, Essay, Redaction, NotificationConfiguration
+from .notification_manager import send_mail
+
+from zipfile import ZipFile
 class EssayAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
@@ -28,9 +29,9 @@ class EssayAdmin(admin.ModelAdmin):
 
     def changelist_view(self, request, extra_context=None):
          if request.user.is_superuser:
-             self.list_display = ('student', 'status', 'correção_1', 'correção_2', 'final_grade', 'arquivo', 'ação', 'email')
+             self.list_display = ('pk', 'student', 'status', 'correção_1', 'correção_2', 'final_grade', 'arquivo', 'ação', 'email')
          else:
-             self.list_display = ('student', 'status', 'correção_1', 'correção_2', 'final_grade', 'arquivo', 'ação')
+             self.list_display = ('pk', 'student', 'status', 'correção_1', 'correção_2', 'final_grade', 'arquivo', 'ação')
          return super(EssayAdmin, self).changelist_view(request, extra_context)
     
     def correção_1(self, essay):
@@ -178,6 +179,12 @@ class SchoolAdmin(admin.ModelAdmin):
         return format_html('')
 
 class RedactionAdmin(admin.ModelAdmin):
+    class Media:
+        js = (
+            '//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js',  # jquery",
+            'js/file_input_field_change.js',
+        )
+
     fieldsets = (
         (None, {
             'fields': ('essay', 'monitor', 'file'),
@@ -212,6 +219,16 @@ class RedactionAdmin(admin.ModelAdmin):
 
     def download(self, request, dir, fn):
         return FileResponse(open(dir + fn, 'rb'), as_attachment=True, filename=fn)
+
+    def get_form(self, request, obj=None, **kwargs):
+        print('request', request.GET, request.user)
+        form = super(RedactionAdmin, self).get_form(request, obj, **kwargs)
+        form.base_fields['monitor'].initial = None
+        if request and request.user:
+            form.base_fields['monitor'].initial = request.user
+        if request and request.GET and 'essay' in request.GET:
+            form.base_fields['essay'].initial = request.GET['essay']
+        return form
 
 admin.site.register(Essay, EssayAdmin)
 admin.site.register(Student, StudentAdmin)
