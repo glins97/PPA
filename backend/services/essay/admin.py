@@ -82,7 +82,7 @@ class EssayAdmin(admin.ModelAdmin):
             obj.status = status
             obj.save()
             self.message_user(request, "Status atualizado!")
-            return HttpResponseRedirect(r'../../../../redaction/add/?essay=33')
+            return HttpResponseRedirect(r'../../../../redaction/add/?essay=' + str(id))
         except Exception as e:
             print(e)
             self.message_user(request, "Falha ao atualizar status, consulte o Administrador!", level=messages.ERROR)
