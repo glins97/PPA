@@ -12,7 +12,7 @@ from zipfile import ZipFile
 class EssayAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
-            'fields': ('student', 'file'),
+            'fields': ('student', 'file', 'theme'),
         }),
         ('Monitores', {
             'fields': ('monitor_1', 'monitor_2', 'has_correction'),
@@ -22,18 +22,21 @@ class EssayAdmin(admin.ModelAdmin):
         }),
     )
     autocomplete_fields = ('student', 'monitor_1', 'monitor_2')
-    list_filter = ('student__school', 'student__class_id', 'status', 'upload_date', 'final_grade', 'sent')
+    list_filter = ('student__school', 'student__class_id', 'status', 'theme', 'upload_date', 'final_grade', 'sent')
     search_fields = ('student__name', )
     readonly_fields = ('status', 'redactions', 'upload_date', 'delivery_date', 'last_modified', 'final_grade')
     list_per_page = 100
 
     def changelist_view(self, request, extra_context=None):
          if request.user.is_superuser:
-             self.list_display = ('pk', 'student', 'status', 'correção_1', 'correção_2', 'final_grade', 'arquivo', 'ação', 'email')
+             self.list_display = ('id', 'theme', 'student', 'status', 'correção_1', 'correção_2', 'final_grade', 'arquivo', 'ação', 'email')
          else:
-             self.list_display = ('pk', 'student', 'status', 'correção_1', 'correção_2', 'final_grade', 'arquivo', 'ação')
+             self.list_display = ('id', 'theme', 'student', 'status', 'correção_1', 'correção_2', 'final_grade', 'arquivo', 'ação')
          return super(EssayAdmin, self).changelist_view(request, extra_context)
     
+    def id(self, essay):
+        return essay.pk
+
     def correção_1(self, essay):
         redactions = essay.redactions.all()
         if len(redactions) > 0:
@@ -79,10 +82,11 @@ class EssayAdmin(admin.ModelAdmin):
             obj.status = status
             obj.save()
             self.message_user(request, "Status atualizado!")
+            return HttpResponseRedirect(r'../../../../redaction/add/?essay=33')
         except Exception as e:
             print(e)
             self.message_user(request, "Falha ao atualizar status, consulte o Administrador!", level=messages.ERROR)
-        return HttpResponseRedirect(r'../../../')
+            return HttpResponseRedirect(r'../../../')
 
     def send(self, request, id):
         try:            
@@ -179,12 +183,6 @@ class SchoolAdmin(admin.ModelAdmin):
         return format_html('')
 
 class RedactionAdmin(admin.ModelAdmin):
-    class Media:
-        js = (
-            '//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js',  # jquery",
-            'js/file_input_field_change.js',
-        )
-
     fieldsets = (
         (None, {
             'fields': ('essay', 'monitor', 'file'),
@@ -197,7 +195,7 @@ class RedactionAdmin(admin.ModelAdmin):
     search_fields = ('essay__student__name',)
     list_display = ('essay', 'date', 'campus', 'turma', 'monitor', 'grades_average')
     list_filter = ('essay__student__school', 'essay__student__class_id', 'monitor', 'grades_average')
-    # readonly_fields = ('grade_1', 'grade_2', 'grade_3', 'grade_4', 'grade_5')
+    readonly_fields = ('grade_1', 'grade_2', 'grade_3', 'grade_4', 'grade_5')
     list_per_page = 100
 
     def campus(self, redaction):
