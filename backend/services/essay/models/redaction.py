@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from .essay import Essay
 from ..event_manager import EventManager
+import PyPDF2
 
 def redactions_upload_to(redaction, a):
     return 'uploads/redactions/[CORRECAO]-{}-{}-{}.pdf'.format(redaction.essay.student.name, redaction.essay.student.school.name, redaction.essay.upload_date)
@@ -70,9 +71,9 @@ class Redaction(models.Model):
                         g5 = int(ff['b5']['/V'])
                     else:
                         g5 = 0
-            except:
-                self.message_user("Falha ao ler PDF, por favor contate o Administrador!", level=messages.ERROR)
-            
+            except Exception as e:
+                print('ERROR ON PDF READING', repr(e))
+
         self.grades_average = 0
         self.grade_1 = max([self.grade_1, g1])
         self.grade_2 = max([self.grade_2, g2])
@@ -80,6 +81,7 @@ class Redaction(models.Model):
         self.grade_4 = max([self.grade_4, g4])
         self.grade_5 = max([self.grade_5, g5])
         for grade in [self.grade_1, self.grade_2, self.grade_3, self.grade_4, self.grade_5]:
+            print(grade)
             self.grades_average += grade
         super().save(*args, **kwargs) 
 

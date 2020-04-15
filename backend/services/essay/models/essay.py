@@ -70,7 +70,7 @@ class Essay(models.Model):
         # if new file is manually added, then append correction page
         if str(self.previous_file) != str(self.file):
             file_dir = str(self.file)
-            print('FILE:', file_dir)
+            print('TRIAGE START:', file_dir)
             if '.png' in file_dir.lower() or '.jpg' in file_dir.lower() or '.peg' in file_dir.lower():
                 subprocess.call(['convert', file_dir, file_dir[:-4] + '.pdf'])
                 file_dir = file_dir[:-4] + '.pdf'
@@ -78,6 +78,7 @@ class Essay(models.Model):
             output = file_dir.replace('.pdf', '_.pdf')
             subprocess.call(['pdftk', file_dir, 'essay/inputs/MODEL.pdf', 'cat',  'output', output])
             self.file = output
+            print('END OF TRIAGE')
         self.previous_file = self.file
 
         if not self.has_essay:
