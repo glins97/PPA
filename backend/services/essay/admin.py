@@ -82,11 +82,10 @@ class EssayAdmin(admin.ModelAdmin):
             obj.status = status
             obj.save()
             self.message_user(request, "Status atualizado!")
-            return HttpResponseRedirect(r'../../../')
         except Exception as e:
             print(e)
             self.message_user(request, "Falha ao atualizar status, consulte o Administrador!", level=messages.ERROR)
-            return HttpResponseRedirect(r'../../../')
+        return HttpResponseRedirect(r'../../../')
 
     def send(self, request, id):
         try:            
@@ -119,7 +118,7 @@ class EssayAdmin(admin.ModelAdmin):
         if request.student.school.send_mode_target == 'MODE_STUDENT' and request.has_correction and not request.sent:
             if request.student.email:
                 html += format_html(
-                    '<a class="button" href="send/{}" style="background-color:#ff6960">ENCAMINHAR CORREÇÃO</a>&nbsp'.format(request.pk))
+                    '<a class="button" href="send/{}" style="background-color:#ff6960">ENCAMINHAR CORREÇÃO</a>&nbsp'.format(request.pk))
             else:
                 html += format_html(
                     '<a style="color:#ff6960">SEM EMAIL CADASTRADO</a>&nbsp')

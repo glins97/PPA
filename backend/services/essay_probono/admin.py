@@ -99,7 +99,10 @@ class EssayAdmin(admin.ModelAdmin):
         html = format_html('')
         if request.status == 'AGUARDANDO CORREÇÃO':
             html += format_html(
-                '<a class="button" href="change_status/{}/{}">INICIAR CORREÇÃO</a>&nbsp'.format(request.pk, 'CORRIGINDO'))
+                '<a class="button" href="change_status/{}/{}">INICIAR CORREÇÃO</a>&nbsp'.format(request.pk, 'CORRIGINDO'))
+        if request.status == 'CORRIGINDO':
+            html += format_html(
+                '<a class="button" href="../redaction/add/?essay={}">ADICIONAR CORREÇÃO</a>&nbsp'.format(request.pk, 'CORRIGINDO'))
         
         return html
 
@@ -108,10 +111,10 @@ class EssayAdmin(admin.ModelAdmin):
         if request.has_correction and not request.sent:
             if request.student.email:
                 html += format_html(
-                    '<a class="button" href="send/{}" style="background-color:#ff6960">ENVIAR CORREÇÃO</a>&nbsp'.format(request.pk))
+                    '<a class="button" href="send/{}" style="background-color:#ff6960">ENVIAR CORREÇÃO</a>&nbsp'.format(request.pk))
             else:
                 html += format_html(
-                    '<a style="color:#ff6960">SEM EMAIL CADASTRADO</a>&nbsp')
+                    '<a style="color:#ff6960">SEM EMAIL CADASTRADO</a>&nbsp')
         return html
 
     def get_search_results(self, request, queryset, search_term):

@@ -13,7 +13,7 @@ def essays_upload_to(essay, a):
 class Essay(models.Model):
     student = models.ForeignKey(Student, verbose_name='Aluno', on_delete=models.CASCADE)
     
-    file = models.FileField(verbose_name='redação', upload_to=essays_upload_to, null=True, blank=True)
+    file = models.FileField(verbose_name='redação', upload_to=essays_upload_to)
     redactions = models.ManyToManyField('Redaction', related_name='redactions', verbose_name='correções', null=True, blank=True)
     last_redaction = models.ForeignKey('Redaction', related_name='last_redaction', editable=False, on_delete=models.CASCADE, blank=True, null=True)
     status = models.CharField(editable=False, max_length=255, default='AGUARDANDO CORREÇÃO')
