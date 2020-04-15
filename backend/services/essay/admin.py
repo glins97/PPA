@@ -76,16 +76,13 @@ class EssayAdmin(admin.ModelAdmin):
     def arquivo(self, request):
         return format_html('<a href="view/uploads/latest/{pk}">DOWNLOAD</a>&nbsp'.format(pk=request.pk))
     
-    def change_status(self, request, id, status, redirect=False):
+    def change_status(self, request, id, status):
         try:            
             obj = Essay.objects.get(pk=id)
             obj.status = status
             obj.save()
-            if redirect:
-                return HttpResponseRedirect(r'../../../../redaction/add/?essay=' + str(id))
-            else:
-                return HttpResponseRedirect(r'../../../')
-                self.message_user(request, "Status atualizado!")
+            self.message_user(request, "Status atualizado!")
+            return HttpResponseRedirect(r'../../../')
         except Exception as e:
             print(e)
             self.message_user(request, "Falha ao atualizar status, consulte o Administrador!", level=messages.ERROR)
@@ -113,7 +110,7 @@ class EssayAdmin(admin.ModelAdmin):
                 '<a class="button" href="change_status/{}/{}">INICIAR CORREÇÃO</a>&nbsp'.format(request.pk, 'CORRIGINDO'))
         if request.status == 'CORRIGINDO':
             html += format_html(
-                '<a class="button" href="change_status/{}/{}">ADICIONAR CORREÇÃO</a>&nbsp'.format(request.pk, 'CORRIGINDO', redirect=True))
+                '<a class="button" href="../redaction/add/?essay={}">ADICIONAR CORREÇÃO</a>&nbsp'.format(request.pk, 'CORRIGINDO'))
         
         return html
 
