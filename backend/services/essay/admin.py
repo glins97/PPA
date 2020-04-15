@@ -76,13 +76,16 @@ class EssayAdmin(admin.ModelAdmin):
     def arquivo(self, request):
         return format_html('<a href="view/uploads/latest/{pk}">DOWNLOAD</a>&nbsp'.format(pk=request.pk))
     
-    def change_status(self, request, id, status):
+    def change_status(self, request, id, status, redirect=False):
         try:            
             obj = Essay.objects.get(pk=id)
             obj.status = status
             obj.save()
-            self.message_user(request, "Status atualizado!")
-            return HttpResponseRedirect(r'../../../../redaction/add/?essay=' + str(id))
+            if redirect:
+                return HttpResponseRedirect(r'../../../../redaction/add/?essay=' + str(id))
+            else:
+                return HttpResponseRedirect(r'../../../')
+                self.message_user(request, "Status atualizado!")
         except Exception as e:
             print(e)
             self.message_user(request, "Falha ao atualizar status, consulte o Administrador!", level=messages.ERROR)
@@ -108,6 +111,9 @@ class EssayAdmin(admin.ModelAdmin):
         if request.status == 'AGUARDANDO CORREÇÃO':
             html += format_html(
                 '<a class="button" href="change_status/{}/{}">INICIAR CORREÇÃO</a>&nbsp'.format(request.pk, 'CORRIGINDO'))
+        if request.status == 'CORRIGINDO':
+            html += format_html(
+                '<a class="button" href="change_status/{}/{}">ADICIONAR CORREÇÃO</a>&nbsp'.format(request.pk, 'CORRIGINDO', redirect=True))
         
         return html
 
@@ -116,7 +122,7 @@ class EssayAdmin(admin.ModelAdmin):
         if request.student.school.send_mode_target == 'MODE_STUDENT' and request.has_correction and not request.sent:
             if request.student.email:
                 html += format_html(
-                    '<a class="button" href="send/{}" style="background-color:#ff6960">ENVIAR CORREÇÃO</a>&nbsp'.format(request.pk))
+                    '<a class="button" href="send/{}" style="background-color:#ff6960">ENCAMINHAR CORREÇÃO</a>&nbsp'.format(request.pk))
             else:
                 html += format_html(
                     '<a style="color:#ff6960">SEM EMAIL CADASTRADO</a>&nbsp')

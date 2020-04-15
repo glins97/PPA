@@ -11,7 +11,11 @@ import pandas
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "services.settings")
 django.setup()
 from essay_probono.models import Essay, Student
-SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
+SCOPES = [
+    'https://www.googleapis.com/auth/gmail.readonly',
+    'https://www.googleapis.com/auth/gmail.settings.basic',
+    'https://www.googleapis.com/auth/gmail.settings.sharing',
+]
 
 import base64
 from apiclient import errors
@@ -85,13 +89,19 @@ def main():
             if header['name'] == 'Subject':
                 subject_ = header['value'].lower()
         
-        if "redacao" in subject_ or 'redação' in subject_ or 'redaçao' in subject_:
+        blocks = ['GOOGLE']
+        skip = False
+        for block in blocks:
+            if block in from_name:
+                skip = True
+        if skip: continue
+        choice = input('{} {} (Y/N) '.format(from_name, subject_))
+        if choice.lower() == 'y':
             student = get_bd_obj(Student, name=from_name, email=from_email)
             attachment = get_attachments(service, message_id, student)
-            print(student)
             if attachment:
                 essay = get_bd_obj(Essay, mail_id=message_id, student=student, file=attachment)
-
+                essay.save()
 
 if __name__ == '__main__':
     main()
