@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import include, path, re_path
-from django.http import HttpResponse, HttpResponseRedirect, Http404, FileResponse
+from django.http import HttpResponse, HttpResponseRedirect, Http404, FileResponse, HttpRequest
+from django.shortcuts import redirect
 from .models import Student, Essay, Redaction
 from django.utils.html import format_html
 from .notification_manager import send_mail
@@ -100,9 +101,11 @@ class EssayAdmin(admin.ModelAdmin):
         if request.status == 'AGUARDANDO CORREÇÃO':
             html += format_html(
                 '<a class="button" href="change_status/{}/{}">INICIAR CORREÇÃO</a>&nbsp'.format(request.pk, 'CORRIGINDO'))
+            html += format_html(
+                '<a class="button" href="../../../../../redactor?source={}&destination=uploads/essays_probono/&outbound_url=admin/essay_probono/redaction/add/?essay={}" style="background-color:#c7d263">ONLINE</a>&nbsp'.format(request.file, request.pk))
         if request.status == 'CORRIGINDO':
             html += format_html(
-                '<a class="button" href="../redaction/add/?essay={}">ADICIONAR CORREÇÃO</a>&nbsp'.format(request.pk, 'CORRIGINDO'))
+                '<a class="button" href="../redaction/add/?essay={}">ADICIONAR CORREÇÃO</a>&nbsp'.format(request.pk))
         
         return html
 

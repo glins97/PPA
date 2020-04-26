@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <style>
+    body {
+      font-family: "Lato", sans-serif;
+    }
+    
+    .sidebar {
+      height: 100%;
+      width: 0;
+      position: fixed;
+      z-index: 1;
+      top: 0;
+      left: 0;
+      background-color: #111;
+      overflow-x: hidden;
+      transition: 0.5s;
+      padding-top: 60px;
+    }
+    
+    .sidebar a {
+      padding: 8px 8px 8px 32px;
+      text-decoration: none;
+      font-size: 25px;
+      color: #818181;
+      display: block;
+      transition: 0.3s;
+    }
+
+    .src {
+      transition: 0.3s;
+    }
+
+    .close {
+      display: none;
+    }
+    
+    .sidebar a:hover {
+      color: #333333;
+    }
+    
+    .sidebar .closebtn {
+      position: absolute;
+      top: 0;
+      right: 25px;
+      font-size: 36px;
+      margin-left: 50px;
+    }
+    
+    .openbtn {
+      font-size: 20px;
+      cursor: pointer;
+      background-color: #111;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+    }
+    
+    .openbtn:hover {
+      background-color: #444;
+    }
+    
+    #main {
+      transition: margin-left .5s;
+    }
+    
+    /* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
+    @media screen and (max-height: 450px) {
+      .sidebar {padding-top: 15px;}
+      .sidebar a {font-size: 18px;}
+    }
+  </style>
+  <title>PPA Digital</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+  <link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+
+</head>
+<body class="bg-dark main" id="main" onresize="updateCanvas(); drawRectangles(); drawImages();">
+
+  <script>
+    const COLOR_BLUE = '#0000ff55';
+    const COLOR_GRAY = '#00000055';
+    const COLOR_GREEN = '#00ff0055';
+    const COLOR_RED = '#ff000055';
+    const COLOR_YELLOW = '#ffff0055';
+    var color = "#00000000";
+		
+		var mode = "";
+    var pushes = [];
+    var pops = [];
+		var poppedDrawables = [];
+    var poppedComments = [];
+    var poppedImages = [];
+    var drawables = [];
+    var comments = []
+		var images = [];
+		
+    var lastImage = undefined;
+    var canvas = undefined;
+    var canvasPlaceholder = undefined;
+		
+		var rect_x0 = 0;
+    var rect_x1 = 0;
+    var rect_y0 = 0;
+    var rect_y1 = 0;
+    var PEN_SIZE = 25;
+
+    function isDrawEnabled() {
+      return color != "#00000000" && (document.getElementById("mySidebar").style.width == '' || document.getElementById("mySidebar").style.width == '0px');
+    }
+
+    function openNav() {
+      document.getElementById("mySidebar").style.width = "500px";
+      document.getElementById("src").style.marginLeft = "250px";
+      document.getElementById("canvas").style.marginLeft = "250px";
+    }
+    
+    function closeNav() {
+      document.getElementById("mySidebar").style.width = "0";
+      document.getElementById("src").style.marginLeft= "0";
+      document.getElementById("canvas").style.marginLeft= "0";
+    }
+
+    function getScroll() {
+      if (window.pageYOffset != undefined) {
+        return [pageXOffset, pageYOffset];
+      } else {
+        var sx, sy, d = document,
+          r = d.documentElement,
+          b = d.body;
+        sx = r.scrollLeft || b.scrollLeft || 0;
+        sy = r.scrollTop || b.scrollTop || 0;
+        console.log(sx, sy)
+        return [sx, sy];
+      }
+    }
+
+    function updateCanvas() {
+      var img = document.getElementById("src");
+      canvas.style.position = "absolute";
+      canvas.style.left = img.offsetLeft + "px";
+      canvas.style.top = img.offsetTop + "px";
+      canvas.width = img.width;
+      canvas.height = img.height;
+      canvasPlaceholder.style.position = "absolute";
+      canvasPlaceholder.style.left = img.offsetLeft + "px";
+      canvasPlaceholder.style.top = img.offsetTop + "px";
+      canvasPlaceholder.width = img.width;
+      canvasPlaceholder.height = img.height;
+		}
+		
+		function getColor(color) {
+			switch (color) {
+				case COLOR_BLUE: return [0, 0, 1, 0.35];
+				case COLOR_RED: return [1, 0, 0, 0.35];
+				case COLOR_YELLOW: return [1, 1, 0, 0.35];
+				case COLOR_GRAY: return [0, 0, 0, 0.35];
+				case COLOR_GREEN: return [0, 1, 0, 0.35];
+			}
+			return [0, 0, 0, 0];
+		}
+
+    function setColor(newColor) {
+      color = newColor;
+    }
+
+    function setMode(newMode) {
+      mode = newMode;
+    }
+
+    function addDrawable(x0, y0, x1, y1, color){
+      if (!isDrawEnabled()) return;
+      var ctx = canvas.getContext("2d");
+			drawables.push(
+					[x0, y0, x1, y1, color, mode]
+			);
+			pushes.push(mode);
+			ctx.beginPath();
+			ctx.lineWidth = PEN_SIZE;
+			ctx.strokeStyle = color;
+			ctx.fillStyle = color;
+			if (mode == "LINE") {
+					ctx.moveTo(x0, y0);
+					ctx.lineTo(x1, y1);
+			}
+			else if (mode == "RECT"){
+					ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+			}
+			ctx.stroke();
+    }
+
+    function addImage(x, y) {
+      if (!isDrawEnabled()) return;
+      if (mode != "COMM") return;
+
+      src = 'images/';
+      switch (color){
+        case COLOR_BLUE: src += 'blue.png'; break;
+        case COLOR_GRAY: src += 'gray.png'; break;
+        case COLOR_GREEN: src += 'green.png'; break;
+        case COLOR_RED: src += 'red.png'; break;
+        case COLOR_YELLOW: src += 'yellow.png'; break;
+      }
+      images.push([src, x, y]);
+			pushes.push(mode);
+      drawImage(src, x, y);
+    }
+
+    function drawRectangles() {
+      if (!isDrawEnabled()) return;
+      var ctx = canvas.getContext("2d");
+      for (var i = 0; i < drawables.length; i++) {
+        var obj = drawables[i];
+        ctx.beginPath();
+        ctx.lineWidth = PEN_SIZE;
+        ctx.strokeStyle = obj[4];
+        ctx.fillStyle = obj[4];
+        if (obj[5] == "LINE") {
+          ctx.moveTo(obj[0], obj[1]);
+          ctx.lineTo(obj[2], obj[3]);
+        } 
+        else if (obj[5] == "RECT") {
+          ctx.fillRect(obj[0], obj[1], obj[2] - obj[0], obj[3] - obj[1]);
+        }
+        ctx.stroke();
+      }
+    }
+
+    function drawImage(src, x, y) {
+      if (!isDrawEnabled()) return;
+      var ctx = canvas.getContext("2d");
+      console.log('@drawImage', src);
+      var image = new Image();
+      image.src = src;
+      image.onload = function(){
+        ctx.drawImage(image, x, y);
+      }
+    }
+
+    function drawImages() {
+      if (!isDrawEnabled()) return;
+      var ctx = canvas.getContext("2d");
+      for (var i = 0; i < images.length; i++) {
+        drawImage(images[i][0], images[i][1], images[i][2])
+      }
+		}
+		
+		function assembleJsonExport(){
+			var data = {};
+      var height = document.getElementById("src").height;
+      data['source'] = "{{ source }}";
+      data['destination'] = "{{ destination }}";
+      var objects = [];
+			var a = 0;
+			var b = 0;
+			for (var i = 0; i < pushes.length; i++) {
+				var object = {};
+				object['mode'] = pushes[i];
+				
+				switch (pushes[i]){
+					case 'COMM': 
+						object['attributes'] = {
+							'comment': comments[a],
+							'src': images[a][0],
+							'x0': images[a][1],
+							'y0': height - images[a][2] - 39,
+						};
+						a += 1;
+						break;
+
+					case 'LINE':  
+						object['attributes'] = {
+							'x0': drawables[b][0],
+							'y0': height - drawables[b][1],
+							'x1': drawables[b][2],
+							'y1': height - drawables[b][3],
+							'color': getColor(drawables[b][4])
+						};
+						b += 1;
+						break;
+
+					case 'RECT':  
+						object['attributes'] = {
+							'x0': drawables[b][0],
+							'y0': height - drawables[b][1],
+							'x1': drawables[b][2],
+							'y1': height - drawables[b][3],
+							'color': getColor(drawables[b][4])
+						};
+						b += 1;
+						break;
+				} 
+
+				objects.push(object);
+			}
+      data['objects'] = objects;
+			console.log(JSON.stringify(data))
+
+      var xhr = new XMLHttpRequest();
+      xhr.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+          $("#allertSuccess").addClass('show') 
+          window.location.replace("../" + this.response);
+        }
+        else if (this.readyState == 4 && this.status != 400) {
+          $("#allertFailure").addClass('show') 
+        }
+      };
+      xhr.open("POST", 'http://127.0.0.1:8000/api/v1/redactor/gen/', true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.send(JSON.stringify(data));
+			return data;
+		}
+
+    function onKeyDown(e) {
+      var evtobj = window.event? event : e
+      console.log(evtobj.keyCode);
+      // control z
+			if (evtobj.keyCode == 90 && evtobj.ctrlKey){
+				var m = pushes.pop();
+				pops.push(m);
+        if (m == "LINE" || m == "RECT") 
+					poppedDrawables.push(drawables.pop());
+        else if (m == "COMM"){
+					poppedImages.push(images.pop());
+          poppedComments.push(comments.pop());
+				}
+				updateCanvas();
+        drawRectangles();
+        drawImages();
+      }
+
+      // control y
+      if (evtobj.keyCode == 89 && evtobj.ctrlKey){
+        var m = pops.pop();
+        pushes.push(m)
+				if (m == "LINE" || m == "RECT")
+					drawables.push(poppedDrawables.pop());
+				else if (m == "COMM") { 
+					images.push(poppedImages.pop());
+          comments.push(poppedComments.pop());
+				}
+        updateCanvas();
+        drawRectangles();
+        drawImages();
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", function(){
+      canvas = document.getElementById("canvas");
+      canvasPlaceholder = document.getElementById("canvasPlaceholder");
+
+      console.log('mousedown', mode);
+      $(canvasPlaceholder).on('mousedown', function(e) {
+        if (!isDrawEnabled()) return;
+
+        rect_x0 = e.originalEvent.clientX - $(canvasPlaceholder).offset().left;
+        rect_y0 = e.originalEvent.clientY - $(canvasPlaceholder).offset().top;
+        rect_x1 = 0;
+        rect_y1 = 0;
+        spos = getScroll()
+        var ctx = canvasPlaceholder.getContext("2d");
+        ctx.clearRect(0, 0, canvasPlaceholder.width, canvasPlaceholder.height);
+        if(rect_x0 && rect_y0 && mode == "LINE") {
+          ctx.beginPath();
+          ctx.strokeStyle = color;
+          ctx.moveTo(rect_x0 - spos[0], rect_y0 + spos[1])
+          ctx.lineTo(rect_x0 - spos[0], rect_y0 + spos[1]);
+          ctx.lineWidth = PEN_SIZE;
+          ctx.stroke();
+        }
+        if (mode == "COMM"){
+          src = 'images/';
+          switch (color){
+            case COLOR_BLUE: src += 'blue.png'; break;
+            case COLOR_GRAY: src += 'gray.png'; break;
+            case COLOR_GREEN: src += 'green.png'; break;
+            case COLOR_RED: src += 'red.png'; break;
+            case COLOR_YELLOW: src += 'yellow.png'; break;
+          }
+          image = new Image();
+          image.src = src;
+          lastImage = image;
+          image.onload = function(){
+            ctx.drawImage(image, rect_x0 - spos[0] - 15, rect_y0 + spos[1] - 25);
+          }
+        }
+      });
+
+      $(canvasPlaceholder).on('mouseup', function(e) {
+        if (!isDrawEnabled()) return;
+        spos = getScroll()
+        rect_x1 = e.originalEvent.clientX - $(canvasPlaceholder).offset().left;
+        rect_y1 = e.originalEvent.clientY - $(canvasPlaceholder).offset().top;
+        canvasPlaceholder.getContext("2d").clearRect(0, 0, canvasPlaceholder.width, canvasPlaceholder.height);
+
+        if (mode == 'LINE' || mode == 'RECT'){
+          // if minimal movement, add square instead
+          if ((rect_x1 - rect_x0) * (rect_x1 - rect_x0) < 100 && (rect_y1 - rect_y0) * (rect_y1 - rect_y0) < 100){
+            addDrawable(rect_x0 - spos[0] - PEN_SIZE / 2, rect_y0 + spos[1], rect_x0 - spos[0] + PEN_SIZE / 2, rect_y0 + spos[1], color);
+          } 
+          else {
+            addDrawable(rect_x0 - spos[0], rect_y0 + spos[1], rect_x1 - spos[0], rect_y1 + spos[1], color);
+          }
+        }
+        if (mode=='COMM'){
+          addImage(rect_x1 - 15 - spos[0], rect_y1 - 25 + spos[1]);
+					document.getElementById("launchPopup").click();
+          lastImage = undefined;
+        }
+
+        rect_x0 = 0;
+        rect_x1 = 0;
+        rect_y0 = 0;
+        rect_y1 = 0;
+        console.log(images);
+      });
+
+      $(canvasPlaceholder).on('mousemove', function(e) {
+        if (!isDrawEnabled()) return;
+        var ctx = canvasPlaceholder.getContext("2d");
+        spos = getScroll()
+        rect_x1 = e.originalEvent.clientX - $(canvasPlaceholder).offset().left;
+        rect_y1 = e.originalEvent.clientY - $(canvasPlaceholder).offset().top;
+
+        if(rect_x0 && rect_y0){
+          ctx.clearRect(0, 0, canvasPlaceholder.width, canvasPlaceholder.height);
+          ctx.beginPath();
+          ctx.lineWidth = PEN_SIZE;
+          ctx.strokeStyle = color;
+          ctx.fillStyle = color;
+          if (mode == "LINE") {
+              ctx.moveTo(rect_x0 - spos[0], rect_y0 + spos[1]);
+              ctx.lineTo(rect_x1 - spos[0], rect_y1 + spos[1]);
+              ctx.stroke();
+          }
+          else if (mode == "RECT"){
+              ctx.fillRect(rect_x0 - spos[0], rect_y0 + spos[1], rect_x1 - rect_x0, rect_y1 - rect_y0)
+              ctx.stroke();
+          }
+          else if (mode == 'COMM'){
+            ctx.drawImage(lastImage, rect_x1 - 15 - spos[0], rect_y1 - 25 + spos[1]);
+          }
+        }
+      });
+      updateCanvas();
+      document.onkeydown = onKeyDown;
+    });
+
+  </script>
+
+  <nav class="navbar navbar-expand-sm bg-dark navbar-dark"
+  style="border-style: solid; border-width: 10px 0 0 0;">
+  <!-- Brand -->
+    <div class="navbar order-0">
+      <a class="navbar-brand" href="#">PPA Digital</a>
+    </div>
+    <div class="mx-auto order-1 bg-dark">
+      <button type="button" onclick="openNav()" class="btn shadow-none btn-outline-light" style="margin-right: 20px;">AVALIAR</button>
+      <div class="btn-group btn-group-toggle" data-toggle="buttons">
+        <label class="btn shadow-none btn-outline-primary">
+          <input type="radio" name="options" style="box-shadow:none !important" id="option1" aria-pressed="false" onclick='setColor("#0000ff55");'>             |
+        </label>
+        <label class="btn shadow-none btn-outline-secondary">
+          <input type="radio" name="options" style="box-shadow:none !important" id="option2" aria-pressed="false" onclick='setColor("#00000055");'>             |
+        </label>
+        <label class="btn shadow-none btn-outline-success">
+          <input type="radio" name="options" style="box-shadow:none !important" id="option3" aria-pressed="false" onclick='setColor("#00ff0055");'>             |
+        </label>
+        <label class="btn shadow-none btn-outline-danger">
+          <input type="radio" name="options" style="box-shadow:none !important" id="option4" aria-pressed="false" onclick='setColor("#ff000055");'>             |
+        </label>
+        <label class="btn shadow-none btn-outline-warning">
+          <input type="radio" name="options" style="box-shadow:none !important" id="option5" aria-pressed="false" onclick='setColor("#ffff0055");'>             |
+        </label>
+      </div>
+      <div class="btn-group btn-group-toggle" data-toggle="buttons">
+        <label class="btn shadow-none btn-outline-light" style="margin-left: 20px;">
+          <input type="radio" name="options6" style="box-shadow:none !important;" id="option6" aria-pressed="false" onclick='setMode("LINE")'> LINHA
+        </label>
+        <label class="btn shadow-none btn-outline-light">
+          <input type="radio" name="options6" style="box-shadow:none !important;" id="option6" aria-pressed="false" onclick='setMode("RECT")'> RETÂNGULO
+        </label>
+        <label class="btn shadow-none btn-outline-light">
+          <input type="radio" name="options6" style="box-shadow:none !important;" id="option6" aria-pressed="false" onclick='setMode("COMM")'> COMENTAR
+        </label>
+      </div>
+			<button type="button" style="margin-left: 20px;" class="btn shadow-none btn-success" onclick="assembleJsonExport()">BAIXAR</button>
+			<button type="button" style="margin-left: 20px;" class="btn shadow-none btn-success" onclick="window.location.href='{{outbound_url}}'">SALVAR</button>
+			<button id="launchPopup" type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal" hidden=true></button>
+    </div>
+    </div>
+    <div class="navbar order-2">
+      <!-- Links -->
+      <ul class="navbar-nav">
+        <!-- Dropdown -->
+        <li class="nav-item dropdown">
+          <a class="nav-link" href="#" id="navbardrop" data-toggle="dropdown">
+            Gabriel Lins
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Alerts -->
+  <div class="alert alert-danger alert-dismissible fade hide" role="alert-error" id="allertFailure" style="margin-left: 35px; margin-right: 35px;">
+    Falha ao gerar PDF!
+    <button type="button" class="close" data-dismiss="alert-error" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="alert alert-success alert-dismissible fade hide" role="alert-success" id="allertSuccess" style="margin-left: 35px; margin-right: 35px;">
+    PDF gerado com sucesso!
+    <button type="button" class="close" data-dismiss="alert-success" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  
+  <!-- Side Bar -->
+  <div id="mySidebar" class="sidebar bg-light">
+    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">×</a>
+    <div class="panel-group" id="accordion">
+      
+      <!-- Comp 1 -->
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h4 class="panel-title">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+            Competência 1</a>
+          </h4>
+        </div>
+        <div id="collapse1" class="panel-collapse collapse in" style="margin-left: 30px; margin-bottom: 30px;">
+          <div class="container">
+            <div class="row">
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1" value="option1">
+                <label class="form-check-label" for="inlineRadio1">200</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio2" value="option2">
+                <label class="form-check-label" for="inlineRadio2">160</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio3" value="option3">
+                <label class="form-check-label" for="inlineRadio3">120</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio4" value="option4">
+                <label class="form-check-label" for="inlineRadio4">80</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio5" value="option5">
+                <label class="form-check-label" for="inlineRadio5">40</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio6" value="option6">
+                <label class="form-check-label" for="inlineRadio6">0</label>
+              </div>
+            </div>
+            <div class="row" style="margin-top: 10px;">
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox1" value="option1">
+                <label class="form-check-label" for="inlineCheckbox1">Truncamento</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox2" value="option2">
+                <label class="form-check-label" for="inlineCheckbox2">Justaposição</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox3" value="option3">
+                <label class="form-check-label" for="inlineCheckbox3">Excesso</label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox4" value="option4">
+                <label class="form-check-label" for="inlineCheckbox4">Repetição</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox5" value="option5">
+                <label class="form-check-label" for="inlineCheckbox5">Ausência</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox6" value="option6">
+                <label class="form-check-label" for="inlineCheckbox6">Convenção</label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox7" value="option7">
+                <label class="form-check-label" for="inlineCheckbox7">Gramática</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox8" value="option8">
+                <label class="form-check-label" for="inlineCheckbox8">Registro</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox9" value="option9">
+                <label class="form-check-label" for="inlineCheckbox9">Vocabulário</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comp 2 -->
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h4 class="panel-title">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapse2">
+            Competência 2</a>
+          </h4>
+        </div>
+        <div id="collapse2" class="panel-collapse collapse in" style="margin-left: 30px; margin-bottom: 30px;">
+          <div class="container">
+            <div class="row">
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadio2Options" id="inlineRadio21" value="option1">
+                <label class="form-check-label" for="inlineRadio21">200</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadio2Options" id="inlineRadio22" value="option2">
+                <label class="form-check-label" for="inlineRadio22">160</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadio2Options" id="inlineRadio23" value="option3">
+                <label class="form-check-label" for="inlineRadio23">120</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadio2Options" id="inlineRadio24" value="option4">
+                <label class="form-check-label" for="inlineRadio24">80</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadio2Options" id="inlineRadio25" value="option5">
+                <label class="form-check-label" for="inlineRadio25">40</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+              </div>
+            </div>
+            <div class="row" style="margin-top: 10px;">
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox21" value="option1">
+                <label class="form-check-label" for="inlineCheckbox21">Improdutivo</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox22" value="option2">
+                <label class="form-check-label" for="inlineCheckbox22">Pessoal</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox23" value="option3">
+                <label class="form-check-label" for="inlineCheckbox23">Não pertinente</label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox24" value="option4">
+                <label class="form-check-label" for="inlineCheckbox24">Não criativo</label> 
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox25" value="option5">
+                <label class="form-check-label" for="inlineCheckbox25">Cópia</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox26" value="option6">
+                <label class="form-check-label" for="inlineCheckbox26">Embrionário</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Comp 3 -->
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h4 class="panel-title">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapse3">
+            Competência 3</a>
+          </h4>
+        </div>
+        <div id="collapse3" class="panel-collapse collapse in" style="margin-left: 30px; margin-bottom: 30px;">
+          <div class="container">
+            <div class="row">
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadio3Options" id="inlineRadio31" value="option1">
+                <label class="form-check-label" for="inlineRadio31">200</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadio3Options" id="inlineRadio32" value="option2">
+                <label class="form-check-label" for="inlineRadio32">160</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadio3Options" id="inlineRadio33" value="option3">
+                <label class="form-check-label" for="inlineRadio33">120</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadio3Options" id="inlineRadio34" value="option4">
+                <label class="form-check-label" for="inlineRadio34">80</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadio3Options" id="inlineRadio35" value="option5">
+                <label class="form-check-label" for="inlineRadio35">40</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadio3Options" id="inlineRadio36" value="option6">
+                <label class="form-check-label" for="inlineRadio36">0</label>
+              </div>
+            </div>
+            <div class="row" style="margin-top: 10px;">
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox31" value="option1">
+                <label class="form-check-label" for="inlineCheckbox31">Retomada </label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox32" value="option2">
+                <label class="form-check-label" for="inlineCheckbox32">Hierarquisação</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox33" value="option3">
+                <label class="form-check-label" for="inlineCheckbox33">Intervenção</label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox34" value="option4">
+                <label class="form-check-label" for="inlineCheckbox34">Abandono</label> 
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox35" value="option5">
+                <label class="form-check-label" for="inlineCheckbox35">Desconexão</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox36" value="option6">
+                <label class="form-check-label" for="inlineCheckbox36">Progressividade</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Comp 4 -->
+      </div><div class="panel panel-default">
+        <div class="panel-heading">
+          <h4 class="panel-title">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapse4">
+            Competência 4</a>
+          </h4>
+        </div>
+        <div id="collapse4" class="panel-collapse collapse in" style="margin-left: 30px; margin-bottom: 30px;">
+          <div class="container">
+            <div class="row">
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadio4Options" id="inlineRadio41" value="option1">
+                <label class="form-check-label" for="inlineRadio41">200</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadio4Options" id="inlineRadio42" value="option2">
+                <label class="form-check-label" for="inlineRadio42">160</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadio4Options" id="inlineRadio43" value="option3">
+                <label class="form-check-label" for="inlineRadio43">120</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadio4Options" id="inlineRadio44" value="option4">
+                <label class="form-check-label" for="inlineRadio44">80</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadio4Options" id="inlineRadio45" value="option5">
+                <label class="form-check-label" for="inlineRadio45">40</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadio4Options" id="inlineRadio46" value="option6">
+                <label class="form-check-label" for="inlineRadio46">0</label>
+              </div>
+            </div>
+            <div class="row" style="margin-top: 10px;">
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" id="inlineradio411" value="option1" name="radiooRepsOptions">
+                <label class="form-check-label" for="inlineradio411">1~3 repetições</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" id="inlineradio412" value="option2" name="radiooRepsOptions">
+                <label class="form-check-label" for="inlineradio412">4~5 repetições</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" id="inlineradio413" value="option3" name="radiooRepsOptions">
+                <label class="form-check-label" for="inlineradio413">6+ repetições</label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlinecheckbox414" value="option4">
+                <label class="form-check-label" for="inlinecheckbox414">Monobloco</label> 
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlinecheckbox415" value="option5">
+                <label class="form-check-label" for="inlinecheckbox415">Ausência parcial de conectores</label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlinecheckbox416" value="option6">
+                <label class="form-check-label" for="inlinecheckbox416">Ausência total de conectores</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comp 5 -->
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h4 class="panel-title">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapse5">
+            Competência 5</a>
+          </h4>
+        </div>  
+        <div id="collapse5" class="panel-collapse collapse in" style="margin-left: 30px; margin-bottom: 30px;">
+          <div class="container">
+            <div class="row">
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadio5Options" id="inlineRadio51" value="option1">
+                <label class="form-check-label" for="inlineRadio51">200</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadio5Options" id="inlineRadio52" value="option2">
+                <label class="form-check-label" for="inlineRadio52">160</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadio5Options" id="inlineRadio53" value="option3">
+                <label class="form-check-label" for="inlineRadio53">120</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadio5Options" id="inlineRadio54" value="option4">
+                <label class="form-check-label" for="inlineRadio54">80</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadio5Options" id="inlineRadio55" value="option5">
+                <label class="form-check-label" for="inlineRadio55">40</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadio5Options" id="inlineRadio56" value="option6">
+                <label class="form-check-label" for="inlineRadio56">0</label>
+              </div>
+            </div>
+            <div class="row" style="margin-top: 10px;">
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox51" value="option1">
+                <label class="form-check-label" for="inlineCheckbox51">Agente</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox52" value="option2">
+                <label class="form-check-label" for="inlineCheckbox52">Ação</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox53" value="option3">
+                <label class="form-check-label" for="inlineCheckbox53">Modo/meio</label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox54" value="option4">
+                <label class="form-check-label" for="inlineCheckbox54">Finalidade</label> 
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox55" value="option5">
+                <label class="form-check-label" for="inlineCheckbox55">Detalhamento</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox56" value="option6">
+                <label class="form-check-label" for="inlineCheckbox56">Condicional</label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox57" value="option7">
+                <label class="form-check-label" for="inlineCheckbox57">Nulidade</label> 
+              </div>
+              <div class="col-sm form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="inlineCheckbox58" value="option8">
+                <label class="form-check-label" for="inlineCheckbox58">Incompleto</label>
+              </div>
+              <div class="col-sm form-check form-check-inline">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div> 
+  </div>
+  
+  <!-- Popup -->
+  <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel" >Adicionar comentário</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form>
+            <div class="form-group">
+              <label for="message-text" class="col-form-label">Mensagem:</label>
+              <textarea class="form-control" id="message-text"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="comments.push(document.getElementById('message-text').value); document.getElementById('message-text').value = ''">Salvar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="container">
+    <br> <br>
+    <img src="{{ source }}" id="src" class="src" alt=" {{ source }}" style='width:1240px; height: auto; color:white' onload="updateCanvas()">
+    <canvas id="canvas" class="src"></canvas>
+    <canvas id="canvasPlaceholder" class="src"></canvas>
+    <br> <br> <br> <br> <br> <br>
+  </div>
+
+</body>
+</html>
+
+

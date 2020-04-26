@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     'tps',
     'essay.apps.EssayConfig',
     'essay_probono.apps.EssayProbonoConfig',
+    'corsheaders',
+    'redactor',
 ]
 
 MIDDLEWARE = [
@@ -57,14 +59,22 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
 
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
 ROOT_URLCONF = 'services.urls'
 
+SETTINGS_PATH = os.path.dirname(os.path.dirname(__file__))
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'templates'),
+            os.path.join(BASE_DIR, 'redactor', 'templates', 'redactor'),
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -132,4 +142,3 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = ( os.path.join('static'), )
 
 ESSAYS_STATIC_URL = '/essay/uploads/'
-MEDIA_ROOT = ''
