@@ -102,7 +102,7 @@ class EssayAdmin(admin.ModelAdmin):
             html += format_html(
                 '<a class="button" href="change_status/{}/{}">INICIAR CORREÇÃO</a>&nbsp'.format(request.pk, 'CORRIGINDO'))
             html += format_html(
-                '<a class="button" href="../../../../../redactor?source={}&destination=uploads/essays_probono/&outbound_url=admin/essay_probono/redaction/add/?essay={}" style="background-color:#c7d263">ONLINE</a>&nbsp'.format(request.file, request.pk))
+                '<a class="button" href="../../../../../redactor?source={}&destination=uploads/essays_probono/&outbound_url=../admin/essay_probono/redaction/add/?essay={}" style="background-color:#c7d263">ONLINE</a>&nbsp'.format(request.file, request.pk))
         if request.status == 'CORRIGINDO':
             html += format_html(
                 '<a class="button" href="../redaction/add/?essay={}">ADICIONAR CORREÇÃO</a>&nbsp'.format(request.pk))

@@ -84,6 +84,7 @@
 <body class="bg-dark main" id="main" onresize="updateCanvas(); drawRectangles(); drawImages();">
 
   <script>
+    var me = this;
     const COLOR_BLUE = '#0000ff55';
     const COLOR_GRAY = '#00000055';
     const COLOR_GREEN = '#00ff0055';
@@ -92,6 +93,7 @@
     var color = "#00000000";
 		
 		var mode = "";
+    var competencies = {};
     var pushes = [];
     var pops = [];
 		var poppedDrawables = [];
@@ -256,6 +258,7 @@
       var height = document.getElementById("src").height;
       data['source'] = "{{ source }}";
       data['destination'] = "{{ destination }}";
+      data['competencies'] = competencies;
       var objects = [];
 			var a = 0;
 			var b = 0;
@@ -453,6 +456,121 @@
       document.onkeydown = onKeyDown;
     });
 
+    $(document).ready(function() {
+      $('input[type=radio][name=inlineRadioOptions]').on('change', function() {
+          console.log('inlineRadioOptions', $(this).val());
+          switch ($(this).val()) {
+            case 'option1':
+              me.competencies['a1'] = '200';
+              break;
+            case 'option2':
+              me.competencies['a1'] = '160';
+              break;
+            case 'option3':
+              me.competencies['a1'] = '120';
+              break;
+            case 'option4':
+              me.competencies['a1'] = '80';
+              break;
+            case 'option5':
+              me.competencies['a1'] = '40';
+              break;
+            case 'option6':
+              me.competencies['a1'] = '0';
+              break;
+          }
+          console.log(me.competencies);
+        });
+
+        $('input[type=radio][name=inlineRadio2Options]').on('change', function() {
+          switch ($(this).val()) {
+            case 'option1':
+              me.competencies['a2'] = '200';
+              break;
+            case 'option2':
+              me.competencies['a2'] = '160';
+              break;
+            case 'option3':
+              me.competencies['a2'] = '120';
+              break;
+            case 'option4':
+              me.competencies['a2'] = '80';
+              break;
+            case 'option5':
+              me.competencies['a2'] = '40';
+              break;
+          }
+        });
+
+        $('input[type=radio][name=inlineRadio3Options]').on('change', function() {
+          switch ($(this).val()) {
+            case 'option1':
+              me.competencies['a3'] = '200';
+              break;
+            case 'option2':
+              me.competencies['a3'] = '160';
+              break;
+            case 'option3':
+              me.competencies['a3'] = '120';
+              break;
+            case 'option4':
+              me.competencies['a3'] = '80';
+              break;
+            case 'option5':
+              me.competencies['a3'] = '40';
+              break;
+            case 'option6':
+              me.competencies['a3'] = '0';
+              break;
+          }
+        });
+
+        $('input[type=radio][name=inlineRadio4Options]').on('change', function() {
+          switch ($(this).val()) {
+            case 'option1':
+              me.competencies['a4'] = '200';
+              break;
+            case 'option2':
+              me.competencies['a4'] = '160';
+              break;
+            case 'option3':
+              me.competencies['a4'] = '120';
+              break;
+            case 'option4':
+              me.competencies['a4'] = '80';
+              break;
+            case 'option5':
+              me.competencies['a4'] = '40';
+              break;
+            case 'option6':
+              me.competencies['a4'] = '0';
+              break;
+          }
+        });
+
+        $('input[type=radio][name=inlineRadio5Options]').on('change', function() {
+          switch ($(this).val()) {
+            case 'option1':
+              me.competencies['a5'] = '200';
+              break;
+            case 'option2':
+              me.competencies['a5'] = '160';
+              break;
+            case 'option3':
+              me.competencies['a5'] = '120';
+              break;
+            case 'option4':
+              me.competencies['a5'] = '80';
+              break;
+            case 'option5':
+              me.competencies['a5'] = '40';
+              break;
+            case 'option6':
+              me.competencies['a5'] = '0';
+              break;
+          }
+      });
+    });
   </script>
 
   <nav class="navbar navbar-expand-sm bg-dark navbar-dark"
